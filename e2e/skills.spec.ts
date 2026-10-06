@@ -198,7 +198,7 @@ test("a sixth distinct selection shows the five-skill limit", async () => {
   await input.fill("");
 });
 
-test("relaunch restores expanded skill history but not its hidden pointer", async () => {
+test("relaunch restores expanded skill history and keeps its hidden pointer in a collapsed notice", async () => {
   const { page } = current();
   historyThreadId = await newSession(page);
   await send(page, "SCENARIO:skills-history");
@@ -225,7 +225,11 @@ test("relaunch restores expanded skill history but not its hidden pointer", asyn
   await expect(chips.nth(1)).toContainText("/mass-ulw");
   await expect(bubble).toContainText("build the thing");
   await expect(byTestId(restored, TESTID.assistantMessage)).toHaveText("Built the thing.");
-  await expect(byTestId(restored, TESTID.conversation)).not.toContainText("Hidden skill pointer.");
+  // omo's hidden pointer stays out of the message and shows only as a collapsed special-message row.
+  await expect(bubble).not.toContainText("Hidden skill pointer.");
+  const pointer = restored.locator(`[data-testid="${TESTID.sessionNotice}"][data-type="omo-mass-ulw:skill-pointer"]`);
+  await expect(pointer).toContainText("Skill pointer");
+  await expect(pointer.getByRole("button")).toHaveAttribute("aria-expanded", "false");
   const toggle = byTestId(restored, TESTID.skillBodyToggle);
   const bodies = byTestId(restored, TESTID.skillBody);
   await expect(toggle).toHaveAttribute("aria-expanded", "false");

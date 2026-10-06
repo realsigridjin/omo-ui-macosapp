@@ -10,6 +10,9 @@ const SUMMARY_LIMIT = 160;
 
 /** Labels for the custom message types omo writes; any other type shows its raw name. */
 const NOTICE_LABELS: Record<string, MessageKey> = {
+  "omo-ulw-loop:skill-pointer": "conversation.notice.skillPointer",
+  "omo-mass-ulw:skill-pointer": "conversation.notice.skillPointer",
+  "omo-ulw-plan:skill-pointer": "conversation.notice.skillPointer",
   "omo-memory:notice": "conversation.notice.memory",
   "omo-kibitzer:recall": "conversation.notice.recall",
   "senpi-monitor:notification": "conversation.notice.monitor",
