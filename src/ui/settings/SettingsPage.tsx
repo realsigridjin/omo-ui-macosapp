@@ -178,7 +178,8 @@ export function SettingsPage() {
 
   const restoreDefaults = (): void => {
     setConfirming(false);
-    updatePreferences({ ...DEFAULT_PREFERENCES, modelProfile: null }).then(
+    // Restoring defaults must not bring back the first-run wizard; About > Show onboarding again does that.
+    updatePreferences({ ...DEFAULT_PREFERENCES, onboardingCompleted: true, modelProfile: null }).then(
       () => {
         setRestoreError(null);
         store.dispatch({ type: "composer/modelSelected", modelId: null, effort: null, profile: null });

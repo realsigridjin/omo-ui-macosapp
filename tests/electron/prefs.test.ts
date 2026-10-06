@@ -67,10 +67,29 @@ describe("PreferencesStore", () => {
     expect(next.recentWorkspaces).toEqual(many.slice(0, 10));
   });
 
+  it("defaults onboarding to incomplete and completes old preferences that already used a workspace", async () => {
+    expect(new PreferencesStore(dir).get().onboardingCompleted).toBe(false);
+    await writeFile(path.join(dir, "preferences.json"), JSON.stringify({ recentWorkspaces: ["/w/0"] }));
+    expect(new PreferencesStore(dir).get().onboardingCompleted).toBe(true);
+    await writeFile(path.join(dir, "preferences.json"), JSON.stringify({ lastWorkspace: "/repo", recentWorkspaces: [] }));
+    expect(new PreferencesStore(dir).get().onboardingCompleted).toBe(true);
+    const store = new PreferencesStore(dir);
+    expect(store.set({ onboardingCompleted: false }).onboardingCompleted).toBe(false);
+    expect(store.set({ onboardingCompleted: "yes" }).onboardingCompleted).toBe(false);
+    expect(store.set({ onboardingCompleted: true }).onboardingCompleted).toBe(true);
+    expect(new PreferencesStore(dir).get().onboardingCompleted).toBe(true);
+  });
+
   it("persists atomically so a new store reads the saved values", async () => {
     new PreferencesStore(dir).set({ theme: "light", locale: "ko", lastWorkspace: "/repo", modelId: null });
     expect(await readdir(dir)).toEqual(["preferences.json"]);
     expect(JSON.parse(await readFile(path.join(dir, "preferences.json"), "utf8"))).toMatchObject({ theme: "light", locale: "ko" });
-    expect(new PreferencesStore(dir).get()).toEqual({ ...DEFAULT_PREFERENCES, theme: "light", locale: "ko", lastWorkspace: "/repo" });
+    expect(new PreferencesStore(dir).get()).toEqual({
+      ...DEFAULT_PREFERENCES,
+      theme: "light",
+      locale: "ko",
+      lastWorkspace: "/repo",
+      onboardingCompleted: true,
+    });
   });
 });

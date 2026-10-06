@@ -168,6 +168,21 @@ export const TESTID = {
   installLog: "install-log",
   connectionBanner: "connection-banner",
   noticeToast: "notice-toast",
+  wizard: "wizard",
+  wizardStep: "wizard-step",
+  wizardClose: "wizard-close",
+  wizardContinue: "wizard-continue",
+  wizardStart: "wizard-start",
+  wizardModelOption: "wizard-model-option",
+  wizardProjectRow: "wizard-project-row",
+  wizardProjectCheckbox: "wizard-project-checkbox",
+  wizardSelectedCount: "wizard-selected-count",
+  wizardSelectAll: "wizard-select-all",
+  wizardSelectNone: "wizard-select-none",
+  wizardProjectGroup: "wizard-project-group",
+  wizardNewProject: "wizard-new-project",
+  wizardNoProject: "wizard-no-project",
+  settingsShowOnboarding: "settings-show-onboarding",
 } as const;
 
 export type TestId = (typeof TESTID)[keyof typeof TESTID];

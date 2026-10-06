@@ -85,7 +85,7 @@ class FakeBridge implements OmoBridgeApi {
   });
   mcp: (params: ClientParams<"mcpServerStatus/list">) => unknown = () => ({ data: [], nextCursor: null });
   status = bridgeStatus("starting");
-  preferences: Preferences = { theme: "system", locale: "system", colorTheme: "omo", lastWorkspace: null, recentWorkspaces: [], modelId: null };
+  preferences: Preferences = { theme: "system", locale: "system", colorTheme: "omo", lastWorkspace: null, recentWorkspaces: [], modelId: null, onboardingCompleted: true };
   private readonly statusListeners = new Set<(status: BridgeStatus) => void>();
   private readonly handlers: Handlers = {
     "mcpServerStatus/list": (params) => this.mcp(params) as ClientResult<"mcpServerStatus/list">,

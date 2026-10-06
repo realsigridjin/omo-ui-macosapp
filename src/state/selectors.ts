@@ -24,11 +24,6 @@ export function selectActiveConversation(state: AppState): Conversation | null {
   return state.activeThreadId === null ? null : (state.conversations[state.activeThreadId] ?? null);
 }
 
-/** The active thread's workspace directory, or null with no active thread or an unknown cwd. */
-export function selectActiveCwd(state: AppState): string | null {
-  return state.activeThreadId === null ? null : (state.threads[state.activeThreadId]?.cwd ?? null);
-}
-
 export function selectThreadLiveState(state: AppState, threadId: string): ThreadLiveState | null {
   return state.conversations[threadId]?.live ?? null;
 }

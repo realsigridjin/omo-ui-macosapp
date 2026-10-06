@@ -6,6 +6,7 @@ import { messages as common } from "./common";
 import { messages as composer } from "./composer";
 import { messages as conversation } from "./conversation";
 import { messages as shell } from "./shell";
+import { messages as wizard } from "./wizard";
 
 export type Locale = "en" | "ko";
 
@@ -22,10 +23,10 @@ function aligned<D extends Dictionary>(dictionary: Aligned<D>): D {
   return dictionary;
 }
 
-const DICTIONARIES = [aligned(common), aligned(shell), aligned(conversation), aligned(composer), aligned(activity), aligned(btw)] as const;
+const DICTIONARIES = [aligned(common), aligned(shell), aligned(conversation), aligned(composer), aligned(activity), aligned(btw), aligned(wizard)] as const;
 
-const EN = { ...common.en, ...shell.en, ...conversation.en, ...composer.en, ...activity.en, ...btw.en } as const;
-const KO = { ...common.ko, ...shell.ko, ...conversation.ko, ...composer.ko, ...activity.ko, ...btw.ko } as const;
+const EN = { ...common.en, ...shell.en, ...conversation.en, ...composer.en, ...activity.en, ...btw.en, ...wizard.en } as const;
+const KO = { ...common.ko, ...shell.ko, ...conversation.ko, ...composer.ko, ...activity.ko, ...btw.ko, ...wizard.ko } as const;
 
 export type MessageKey = keyof typeof EN;
 

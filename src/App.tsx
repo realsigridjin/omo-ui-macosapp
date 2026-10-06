@@ -16,6 +16,7 @@ import { AppFrame } from "./ui/shell/AppFrame";
 import { Sidebar } from "./ui/sidebar/Sidebar";
 import { applyColorTheme, applyThemePreference } from "./ui/theme";
 import { uiState, useUiState } from "./ui/ui-state";
+import { SetupWizard } from "./ui/wizard/SetupWizard";
 
 function MainPane() {
   return (
@@ -33,7 +34,7 @@ function Shell() {
   const bridgeState = useAppSelector((state) => state.bridge?.state ?? null);
   const sidePanelOpen = useAppSelector((state) => state.btw.open);
   useSidePanelShortcut();
-  const { sidebarVisible, sidebarWidth } = useUiState();
+  const { sidebarVisible, sidebarWidth, onboardingOpen } = useUiState();
   const newSession = useNewSessionFlow();
 
   useEffect(() => {
@@ -80,6 +81,7 @@ function Shell() {
         rightPanelWidth={SIDE_PANEL_WIDTH}
       />
       <SettingsPage />
+      {onboardingOpen && <SetupWizard />}
       <NoticeToasts />
     </>
   );
@@ -97,6 +99,7 @@ export function App() {
     void window.omo.getPreferences().then((loaded) => {
       if (current) {
         uiState.setPreferences(loaded);
+        if (!loaded.onboardingCompleted) uiState.setOnboardingOpen(true);
         store.dispatch({ type: "composer/modelSelected", modelId: loaded.modelId, effort: null, profile: loaded.modelProfile });
       }
     });

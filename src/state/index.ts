@@ -49,7 +49,6 @@ export {
   selectActiveSessionModel,
   selectIsTurnActive,
   selectSkillCatalog,
-  selectActiveCwd,
   selectPendingRequestsForThread,
   selectThreadsByWorkspace,
 } from "./selectors";

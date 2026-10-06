@@ -31,6 +31,17 @@ function recent(value: unknown, current: string[]): string[] {
   return unique.slice(0, MAX_RECENT);
 }
 
+/** Older preferences without the flag count as completed when a workspace was already used, so upgrades skip the wizard. */
+function onboardingCompleted(patch: Record<string, unknown>, current: boolean): boolean {
+  if (typeof patch["onboardingCompleted"] === "boolean") return patch["onboardingCompleted"];
+  const last = patch["lastWorkspace"];
+  const usedWorkspace =
+    (typeof last === "string" && last !== "") ||
+    (Array.isArray(patch["recentWorkspaces"]) &&
+      patch["recentWorkspaces"].some((entry) => typeof entry === "string" && entry !== ""));
+  return usedWorkspace ? true : current;
+}
+
 /** Applies every valid field of patch to current; invalid or unknown values keep the current value. */
 function merge(current: Preferences, patch: unknown): Preferences {
   if (!isRecord(patch)) return current;
@@ -43,6 +54,7 @@ function merge(current: Preferences, patch: unknown): Preferences {
     lastWorkspace: has("lastWorkspace") ? nullableString(patch["lastWorkspace"], current.lastWorkspace) : current.lastWorkspace,
     recentWorkspaces: has("recentWorkspaces") ? recent(patch["recentWorkspaces"], current.recentWorkspaces) : current.recentWorkspaces,
     modelId: has("modelId") ? nullableString(patch["modelId"], current.modelId) : current.modelId,
+    onboardingCompleted: onboardingCompleted(patch, current.onboardingCompleted),
     ...(has("modelProfile") ? { modelProfile: patch["modelProfile"] === null ? null :
       (["daily-normal", "daily-heavy", "geeky-normal", "geeky-heavy"] as const).find(value => value === patch["modelProfile"]) ?? current.modelProfile ?? null }
       : current.modelProfile === undefined ? {} : { modelProfile: current.modelProfile }),
