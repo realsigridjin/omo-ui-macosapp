@@ -71,6 +71,10 @@ export interface Diagnostics {
 export type ThemePreference = "system" | "light" | "dark";
 export type LocalePreference = "system" | "en" | "ko";
 
+/** Accent palettes selectable in Settings → Appearance; "omo" is the built-in default. */
+export type ColorTheme = "omo" | "classic" | "mint" | "ocean";
+export const COLOR_THEMES: readonly ColorTheme[] = ["omo", "classic", "mint", "ocean"];
+
 export type ModelProfile = "daily-normal" | "daily-heavy" | "geeky-normal" | "geeky-heavy";
 
 export interface Preferences {
@@ -78,6 +82,8 @@ export interface Preferences {
   omoAutoUpdate?: boolean;
   theme: ThemePreference;
   locale: LocalePreference;
+  /** Accent palette applied on top of the light/dark scheme. */
+  colorTheme: ColorTheme;
   /** Workspace directory used for the last new session. */
   lastWorkspace: string | null;
   /** Most recent workspace directories, newest first, at most 10 entries. */
@@ -86,6 +92,17 @@ export interface Preferences {
   modelId: string | null;
   modelProfile?: ModelProfile | null;
 }
+
+/** Preferences every field resets to on "Restore device defaults" (Settings → General, top right). */
+export const DEFAULT_PREFERENCES: Preferences = {
+  omoAutoUpdate: true,
+  theme: "system",
+  locale: "system",
+  colorTheme: "omo",
+  lastWorkspace: null,
+  recentWorkspaces: [],
+  modelId: null,
+};
 
 /** One turn reconstructed from a session JSONL file. */
 export interface HistoryTurn {

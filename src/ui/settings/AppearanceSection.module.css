@@ -1,0 +1,163 @@
+/* Appearance section: scheme preview cards and palette swatch cards from the Settings reference. */
+
+.schemeRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.schemeCard,
+.paletteCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 120ms ease;
+}
+
+.schemeCard:hover,
+.paletteCard:hover {
+  border-color: var(--dsw-alias-label-caption);
+}
+
+.schemeCard[aria-pressed='true'],
+.paletteCard[aria-pressed='true'] {
+  border-color: var(--dsw-alias-state-business-primary);
+}
+
+.schemeCard:focus-visible,
+.paletteCard:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.cardLabel {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.mock,
+.mockSplit {
+  display: flex;
+  width: 100%;
+  height: 84px;
+  border-radius: var(--dsw-radius-sm);
+  overflow: hidden;
+}
+
+.mockSplit .mock {
+  width: 50%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.mock {
+  gap: 6px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.mockSidebar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 26px;
+  padding: 4px;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.mockMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+.mockLine {
+  display: block;
+  width: 70%;
+  height: 5px;
+  border-radius: 3px;
+}
+
+.mockSidebar .mockLine {
+  width: 100%;
+}
+
+.mockBar {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 12px;
+  padding: 0 4px;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.mockDot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+}
+
+.paletteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.swatchPair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.swatch {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dsw-alias-border-l3);
+}
+
+.swatch[data-active='true'] {
+  border: 2.5px solid var(--dsw-alias-state-business-primary);
+}
+
+.swatchBadge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  color: var(--dsw-alias-label-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schemeCard,
+  .paletteCard {
+    transition: none;
+  }
+}

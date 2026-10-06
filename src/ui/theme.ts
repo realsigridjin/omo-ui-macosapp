@@ -1,8 +1,9 @@
 import { flushSync } from "react-dom";
-import type { ThemePreference } from "../../shared/ipc";
+import type { ColorTheme, ThemePreference } from "../../shared/ipc";
 import { themeRevealGeometry } from "./theme-reveal";
 
 let appliedPreference: ThemePreference | undefined;
+let appliedColorTheme: ColorTheme | undefined;
 let stopFollowingSystem: (() => void) | undefined;
 let activeTransition: ViewTransition | undefined;
 let latestChoice = 0;
@@ -35,23 +36,43 @@ export function applyThemePreference(pref: ThemePreference): void {
   stopFollowingSystem = () => query.removeEventListener("change", sync);
 }
 
+/** Applies an accent palette; "omo" clears the override so the default tokens apply. */
+export function applyColorTheme(theme: ColorTheme): void {
+  if (appliedColorTheme === theme) return;
+  appliedColorTheme = theme;
+  if (theme === "omo") delete document.body.dataset["colorTheme"];
+  else document.body.dataset["colorTheme"] = theme;
+}
+
 /**
  * Apply in the snapshot update callback before persisting the preference. Skipping an earlier transition does not
  * cancel its update callback, so an update whose choice was superseded by a later one applies and persists nothing.
  */
 export function revealThemePreference(pref: ThemePreference, control: HTMLElement, persist: () => void): void {
+  const dark = pref === "dark" || (pref === "system" && window.matchMedia(DARK_QUERY).matches);
+  if (dark === document.body.hasAttribute(DARK_ATTRIBUTE)) {
+    applyThemePreference(pref);
+    persist();
+    return;
+  }
+  revealThemeChange(control, () => {
+    applyThemePreference(pref);
+    persist();
+  });
+}
+
+/**
+ * Runs the circle-reveal view transition from `control` while `apply` swaps tokens inside the
+ * snapshot update callback. Reduced motion or a missing ViewTransition API applies directly.
+ */
+export function revealThemeChange(control: HTMLElement, apply: () => void): void {
   activeTransition?.skipTransition();
   const choice = ++latestChoice;
-  const dark = pref === "dark" || (pref === "system" && window.matchMedia(DARK_QUERY).matches);
   const update = (): void => {
     if (choice !== latestChoice) return;
-    flushSync(() => {
-      applyThemePreference(pref);
-      persist();
-    });
+    flushSync(apply);
   };
-  if (dark === document.body.hasAttribute(DARK_ATTRIBUTE)
-    || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches
     || typeof document.startViewTransition !== "function") {
     update();
     return;

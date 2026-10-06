@@ -11,6 +11,7 @@ import "./dsh/theme/scrollbar.css";
 import "./dsh/theme/gradient-shadow-text.css";
 import "./dsh/theme/shiki.css";
 import "./ui/theme/omo-theme.css";
+import "./ui/theme/color-themes.css";
 import "./ui/app.css";
 import { App } from "./App";
 

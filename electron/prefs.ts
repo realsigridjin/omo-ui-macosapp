@@ -1,19 +1,13 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { LocalePreference, Preferences, ThemePreference } from "../shared/ipc";
+import { COLOR_THEMES, DEFAULT_PREFERENCES } from "../shared/ipc";
+import type { ColorTheme, LocalePreference, Preferences, ThemePreference } from "../shared/ipc";
+
+export { DEFAULT_PREFERENCES };
 
 const THEMES: readonly ThemePreference[] = ["system", "light", "dark"];
 const LOCALES: readonly LocalePreference[] = ["system", "en", "ko"];
 const MAX_RECENT = 10;
-
-export const DEFAULT_PREFERENCES: Preferences = {
-  omoAutoUpdate: true,
-  theme: "system",
-  locale: "system",
-  lastWorkspace: null,
-  recentWorkspaces: [],
-  modelId: null,
-};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -45,6 +39,7 @@ function merge(current: Preferences, patch: unknown): Preferences {
     omoAutoUpdate: typeof patch["omoAutoUpdate"] === "boolean" ? patch["omoAutoUpdate"] : current.omoAutoUpdate ?? true,
     theme: has("theme") ? pick(THEMES, patch["theme"], current.theme) : current.theme,
     locale: has("locale") ? pick(LOCALES, patch["locale"], current.locale) : current.locale,
+    colorTheme: has("colorTheme") ? pick<ColorTheme>(COLOR_THEMES, patch["colorTheme"], current.colorTheme) : current.colorTheme,
     lastWorkspace: has("lastWorkspace") ? nullableString(patch["lastWorkspace"], current.lastWorkspace) : current.lastWorkspace,
     recentWorkspaces: has("recentWorkspaces") ? recent(patch["recentWorkspaces"], current.recentWorkspaces) : current.recentWorkspaces,
     modelId: has("modelId") ? nullableString(patch["modelId"], current.modelId) : current.modelId,

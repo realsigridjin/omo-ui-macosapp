@@ -1,0 +1,176 @@
+/* Accent palettes for Settings → Appearance → Colors & themes. Each selector overrides the
+   OmO default fills (omo-theme.css) and the DSH accent trio (design-platform.css) for one
+   ColorTheme; "omo" is the default and needs no overrides. Swatch colors in
+   AppearanceSection mirror the sidebar fill declared here. */
+
+body[data-color-theme='classic'] {
+  --dsw-alias-state-business-primary: #e11d48;
+  --dsw-alias-state-business-tertiary: #ffe4e9;
+  --dsw-alias-link: #e11d48;
+  --dsw-alias-bg-base: #fdf6f7;
+  --dsw-specific-sidebar-fill: #fbeef1;
+  --dsw-specific-input-major: #ffffff;
+  --dsw-specific-selector: #f8e7ec;
+  --dsw-alias-button-elevated-fill: #ffffff;
+  --dsw-alias-button-floating-hover: #f8e9ee;
+  --dsw-alias-interactive-bg-hover-solid: #f6e2e9;
+  --dsw-alias-bg-module-platform: #faeef2;
+  --dsw-alias-markdown-code-block: #fdf3f5;
+  --dsw-alias-markdown-code-block-banner: #fdf3f5;
+  --dsw-specific-bubble: #f9e8ed;
+  --dsw-specific-sidebar-nav-item-hover: #f7e4ea;
+  --dsw-specific-sidebar-nav-item-active: #f2dbe3;
+  --dsw-menu-surface-fill: rgba(253, 243, 245, 0.58);
+  --dsw-alias-scrollbar-bg-l2: #e4ccd3;
+  --dsw-omo-sidebar-glow: rgba(225, 29, 72, 0.06);
+  --dsw-omo-sidebar-tint: 225 29 72;
+}
+
+body[data-color-theme='classic'][data-ds-dark-theme] {
+  --dsw-alias-state-business-primary: #fb7185;
+  --dsw-alias-state-business-tertiary: #4c1127;
+  --dsw-alias-link: #fb7185;
+  --dsw-alias-bg-base: #1c0e14;
+  --dsw-specific-sidebar-fill: #22121b;
+  --dsw-specific-input-major: #261720;
+  --dsw-specific-selector: #331d28;
+  --dsw-alias-button-elevated-fill: #2a1a23;
+  --dsw-alias-button-floating-hover: #331d28;
+  --dsw-alias-interactive-bg-hover-solid: #331d28;
+  --dsw-alias-bg-layer-1: #2a1a23;
+  --dsw-alias-bg-layer-2: #331d28;
+  --dsw-alias-bg-layer-3: #3f2632;
+  --dsw-alias-bg-module-platform: #3f2632;
+  --dsw-alias-markdown-code-block: #170d12;
+  --dsw-alias-markdown-code-block-banner: #331d28;
+  --dsw-specific-bubble: #38212c;
+  --dsw-specific-sidebar-nav-item-hover: #331d28;
+  --dsw-specific-sidebar-nav-item-active: #4a2c3a;
+  --dsw-menu-surface-fill: rgba(74, 44, 58, 0.45);
+  --dsw-alias-scrollbar-bg-l2: #553845;
+  --dsw-omo-sidebar-glow: rgba(251, 113, 133, 0.08);
+  --dsw-omo-sidebar-tint: 225 29 72;
+}
+
+body[data-color-theme='mint'] {
+  --dsw-alias-state-business-primary: #059669;
+  --dsw-alias-state-business-tertiary: #d1fae3;
+  --dsw-alias-link: #059669;
+  --dsw-alias-bg-base: #f5faf7;
+  --dsw-specific-sidebar-fill: #ecf6f0;
+  --dsw-specific-input-major: #ffffff;
+  --dsw-specific-selector: #e3f2e9;
+  --dsw-alias-button-elevated-fill: #ffffff;
+  --dsw-alias-button-floating-hover: #e6f4ec;
+  --dsw-alias-interactive-bg-hover-solid: #e0f0e7;
+  --dsw-alias-bg-module-platform: #eaf5ee;
+  --dsw-alias-markdown-code-block: #f1faf4;
+  --dsw-alias-markdown-code-block-banner: #f1faf4;
+  --dsw-specific-bubble: #e2f4e9;
+  --dsw-specific-sidebar-nav-item-hover: #e0f1e7;
+  --dsw-specific-sidebar-nav-item-active: #d5ecdf;
+  --dsw-menu-surface-fill: rgba(243, 251, 246, 0.58);
+  --dsw-alias-scrollbar-bg-l2: #c6dfd0;
+  --dsw-omo-sidebar-glow: rgba(5, 150, 105, 0.06);
+  --dsw-omo-sidebar-tint: 5 150 105;
+}
+
+body[data-color-theme='mint'][data-ds-dark-theme] {
+  --dsw-alias-state-business-primary: #34d399;
+  --dsw-alias-state-business-tertiary: #064e3b;
+  --dsw-alias-link: #34d399;
+  --dsw-alias-bg-base: #0c1712;
+  --dsw-specific-sidebar-fill: #0f1e17;
+  --dsw-specific-input-major: #12241b;
+  --dsw-specific-selector: #1b3227;
+  --dsw-alias-button-elevated-fill: #152719;
+  --dsw-alias-button-floating-hover: #1b3227;
+  --dsw-alias-interactive-bg-hover-solid: #1b3227;
+  --dsw-alias-bg-layer-1: #152719;
+  --dsw-alias-bg-layer-2: #1b3227;
+  --dsw-alias-bg-layer-3: #24402f;
+  --dsw-alias-bg-module-platform: #24402f;
+  --dsw-alias-markdown-code-block: #0a140e;
+  --dsw-alias-markdown-code-block-banner: #1b3227;
+  --dsw-specific-bubble: #1f3a2b;
+  --dsw-specific-sidebar-nav-item-hover: #1b3227;
+  --dsw-specific-sidebar-nav-item-active: #2c4c39;
+  --dsw-menu-surface-fill: rgba(44, 76, 57, 0.45);
+  --dsw-alias-scrollbar-bg-l2: #375546;
+  --dsw-omo-sidebar-glow: rgba(52, 211, 153, 0.08);
+  --dsw-omo-sidebar-tint: 5 150 105;
+}
+
+body[data-color-theme='ocean'] {
+  --dsw-alias-state-business-primary: #2563eb;
+  --dsw-alias-state-business-tertiary: #dbe7fd;
+  --dsw-alias-link: #2563eb;
+  --dsw-alias-bg-base: #f4f7fc;
+  --dsw-specific-sidebar-fill: #ecf1fa;
+  --dsw-specific-input-major: #ffffff;
+  --dsw-specific-selector: #e3ecf8;
+  --dsw-alias-button-elevated-fill: #ffffff;
+  --dsw-alias-button-floating-hover: #e6effb;
+  --dsw-alias-interactive-bg-hover-solid: #dfeaf8;
+  --dsw-alias-bg-module-platform: #eaf1fa;
+  --dsw-alias-markdown-code-block: #f1f6fd;
+  --dsw-alias-markdown-code-block-banner: #f1f6fd;
+  --dsw-specific-bubble: #e3edf9;
+  --dsw-specific-sidebar-nav-item-hover: #e1ecf9;
+  --dsw-specific-sidebar-nav-item-active: #d5e5f6;
+  --dsw-menu-surface-fill: rgba(242, 247, 253, 0.58);
+  --dsw-alias-scrollbar-bg-l2: #c8d6ea;
+  --dsw-omo-sidebar-glow: rgba(37, 99, 235, 0.06);
+  --dsw-omo-sidebar-tint: 37 99 235;
+}
+
+body[data-color-theme='ocean'][data-ds-dark-theme] {
+  --dsw-alias-state-business-primary: #60a5fa;
+  --dsw-alias-state-business-tertiary: #172554;
+  --dsw-alias-link: #60a5fa;
+  --dsw-alias-bg-base: #0d1421;
+  --dsw-specific-sidebar-fill: #101a2b;
+  --dsw-specific-input-major: #13202f;
+  --dsw-specific-selector: #1a2b41;
+  --dsw-alias-button-elevated-fill: #16253a;
+  --dsw-alias-button-floating-hover: #1a2b41;
+  --dsw-alias-interactive-bg-hover-solid: #1a2b41;
+  --dsw-alias-bg-layer-1: #16253a;
+  --dsw-alias-bg-layer-2: #1a2b41;
+  --dsw-alias-bg-layer-3: #243a55;
+  --dsw-alias-bg-module-platform: #243a55;
+  --dsw-alias-markdown-code-block: #0a111c;
+  --dsw-alias-markdown-code-block-banner: #1a2b41;
+  --dsw-specific-bubble: #1e3350;
+  --dsw-specific-sidebar-nav-item-hover: #1a2b41;
+  --dsw-specific-sidebar-nav-item-active: #2b4767;
+  --dsw-menu-surface-fill: rgba(43, 71, 103, 0.45);
+  --dsw-alias-scrollbar-bg-l2: #3a5678;
+  --dsw-omo-sidebar-glow: rgba(96, 165, 250, 0.08);
+  --dsw-omo-sidebar-tint: 37 99 235;
+}
+
+/* The macOS menu fill stays nearly opaque; match the darwin selectors from omo-theme.css per palette. */
+html[data-platform='darwin'] body[data-color-theme='classic'] {
+  --dsw-specific-menu: rgba(253, 242, 244, 0.94);
+}
+
+html[data-platform='darwin'] body[data-color-theme='classic'][data-ds-dark-theme] {
+  --dsw-specific-menu: rgba(63, 38, 50, 0.94);
+}
+
+html[data-platform='darwin'] body[data-color-theme='mint'] {
+  --dsw-specific-menu: rgba(240, 250, 244, 0.94);
+}
+
+html[data-platform='darwin'] body[data-color-theme='mint'][data-ds-dark-theme] {
+  --dsw-specific-menu: rgba(36, 64, 47, 0.94);
+}
+
+html[data-platform='darwin'] body[data-color-theme='ocean'] {
+  --dsw-specific-menu: rgba(241, 246, 253, 0.94);
+}
+
+html[data-platform='darwin'] body[data-color-theme='ocean'][data-ds-dark-theme] {
+  --dsw-specific-menu: rgba(36, 58, 85, 0.94);
+}

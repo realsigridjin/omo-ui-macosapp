@@ -6,8 +6,8 @@ import { useLocale, useT } from "../../i18n";
 import type { AccountsSnapshot } from "../../state";
 import { useActions } from "../app-context";
 import { TESTID } from "../testids";
-import { SectionHeading } from "./SectionHeading";
-import css from "./SettingsDialog.module.css";
+import { SettingsGroup } from "./SettingsCard";
+import css from "./SettingsCard.module.css";
 import accountCss from "./AccountsSection.module.css";
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -147,7 +147,7 @@ export function AccountsSection() {
     SUBSCRIPTIONS.has(entry.provider) || entry.accounts.length > 0 || entry.error !== null);
   return (
     <section className={css.section} data-testid={TESTID.settingsAccounts} aria-busy={loading}>
-      <SectionHeading title={t("shell.settings.nav.accounts")} intro={t("shell.settings.accounts.intro")} />
+      <SettingsGroup title={t("shell.settings.nav.accounts")} intro={t("shell.settings.accounts.intro")} />
       <div className={accountCss.toolbar}>
         <Button variant="outline" icon={<IconRefreshOutlineRegular />} disabled={loading} data-testid={TESTID.accountsRefresh} onClick={() => void load()}>
           {loading ? t("shell.settings.accounts.loading") : t("shell.settings.accounts.refresh")}

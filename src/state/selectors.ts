@@ -9,6 +9,11 @@ export function selectSkillCatalog(state: AppState, cwd: string): SkillCatalog {
   return state.skillCatalogs[cwd] ?? EMPTY_SKILL_CATALOG;
 }
 
+/** Workspace directory of the active main thread; null when no thread is open. */
+export function selectActiveCwd(state: AppState): string | null {
+  return state.activeThreadId === null ? null : (state.threads[state.activeThreadId]?.cwd ?? null);
+}
+
 export interface WorkspaceGroup {
   cwd: string;
   label: string;

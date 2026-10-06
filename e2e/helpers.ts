@@ -180,6 +180,7 @@ export async function setTheme(page: Page, theme: "light" | "dark"): Promise<voi
   await byTestId(page, TESTID.openSettings).click();
   const dialog = byTestId(page, TESTID.settingsDialog);
   await expect(dialog).toBeVisible();
+  await dialog.locator('[data-section="appearance"]').click();
   const choice = byTestId(page, theme === "dark" ? TESTID.settingsThemeDark : TESTID.settingsThemeLight);
   await choice.click();
   await expect(choice).toHaveAttribute("aria-pressed", "true");

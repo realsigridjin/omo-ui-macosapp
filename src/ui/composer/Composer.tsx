@@ -3,7 +3,7 @@ import type { KeyboardEvent, MouseEvent, SyntheticEvent } from "react";
 import clsx from "clsx";
 import { IconFolderOpenOutlineRegular, IconPaperclipOutlineRegular, IconCloseOutlineRegular, Tooltip } from "@deepseek-ai/dsh-client-ui-primitives";
 import { ArrowUpGlyph, LockOpenGlyph } from "../glyphs";
-import { parseBtwCommand, selectIsTurnActive, selectSkillCatalog } from "../../state";
+import { parseBtwCommand, selectActiveCwd, selectIsTurnActive, selectSkillCatalog } from "../../state";
 import type { AppState, SkillCatalog } from "../../state";
 import { useT } from "../../i18n";
 import { useActions, useAppSelector } from "../app-context";
@@ -26,9 +26,6 @@ import css from "./Composer.module.css";
 const NO_THREAD_DRAFT = "";
 const EMPTY_DRAFT: SkillDraft = { text: "", selected: [] };
 const NO_OPTIONS: readonly MenuOption[] = [];
-
-const selectActiveCwd = (state: AppState): string | null =>
-  state.activeThreadId === null ? null : (state.threads[state.activeThreadId]?.cwd ?? null);
 
 function menuStatus(hasThread: boolean, loaded: boolean, catalog: SkillCatalog | null): SkillMenuStatus {
   if (!hasThread) return { kind: "startSession" };
