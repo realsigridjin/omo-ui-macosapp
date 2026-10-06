@@ -2,8 +2,8 @@ import { useState } from "react";
 import { IconRightUpOutlineRegular } from "@deepseek-ai/dsh-client-ui-primitives";
 import { useT } from "../../i18n";
 import { errorMessage, useDiagnostics } from "./diagnostics";
-import { SectionHeading } from "./SectionHeading";
-import css from "./SettingsDialog.module.css";
+import { SettingsGroup } from "./SettingsCard";
+import css from "./SettingsCard.module.css";
 
 const DSH_REPOSITORY_URL = "https://github.com/deepseek-ai/deepseek-harness";
 
@@ -23,7 +23,7 @@ export function AboutSection() {
 
   return (
     <section className={css.section}>
-      <SectionHeading title={t("shell.settings.nav.about")} intro={t("shell.settings.about.intro")} />
+      <SettingsGroup title={t("shell.settings.nav.about")} intro={t("shell.settings.about.intro")} />
       <div className={css.card}>
         <div className={css.cardBody}>
           <dl className={css.facts}>

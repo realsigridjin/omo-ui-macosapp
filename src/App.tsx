@@ -11,10 +11,10 @@ import { useNewSessionFlow } from "./ui/new-session";
 import { NoticeToasts } from "./ui/notices/NoticeToasts";
 import { ConnectionBanner } from "./ui/onboarding/ConnectionBanner";
 import { Onboarding } from "./ui/onboarding/Onboarding";
-import { SettingsDialog } from "./ui/settings/SettingsDialog";
+import { SettingsPage } from "./ui/settings/SettingsPage";
 import { AppFrame } from "./ui/shell/AppFrame";
 import { Sidebar } from "./ui/sidebar/Sidebar";
-import { applyThemePreference } from "./ui/theme";
+import { applyColorTheme, applyThemePreference } from "./ui/theme";
 import { uiState, useUiState } from "./ui/ui-state";
 
 function MainPane() {
@@ -79,7 +79,7 @@ function Shell() {
         rightPanel={sidePanelOpen ? renderSidePanel : null}
         rightPanelWidth={SIDE_PANEL_WIDTH}
       />
-      <SettingsDialog />
+      <SettingsPage />
       <NoticeToasts />
     </>
   );
@@ -115,6 +115,9 @@ export function App() {
 
   const theme = preferences?.theme ?? "system";
   useEffect(() => applyThemePreference(theme), [theme]);
+
+  const colorTheme = preferences?.colorTheme ?? "omo";
+  useEffect(() => applyColorTheme(colorTheme), [colorTheme]);
 
   const locale = resolveLocale(preferences?.locale ?? "system", navigator.language);
   useEffect(() => {

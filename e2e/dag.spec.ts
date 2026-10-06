@@ -66,6 +66,7 @@ test("compact DAG and nested subagent todos update without disturbing the conver
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1280, 820));
     // Apply locale through the same settings control used by the app.
     await byTestId(page, TESTID.openSettings).click();
+    await byTestId(page, TESTID.settingsDialog).locator('[data-section="appearance"]').click();
     await page.getByRole("tab", { name: "한국어", exact: true }).click();
     await page.keyboard.press("Escape");
     await expect(chip).toContainText("완료");

@@ -9,8 +9,8 @@ import { useInstaller } from "../onboarding/install";
 import { TESTID } from "../testids";
 import { updatePreferences, useUiState } from "../ui-state";
 import { errorMessage, useDiagnostics } from "./diagnostics";
-import { SectionHeading, SettingRow } from "./SectionHeading";
-import css from "./SettingsDialog.module.css";
+import { SettingsGroup, SettingsRow, Toggle } from "./SettingsCard";
+import css from "./SettingsCard.module.css";
 
 type RestartState = { kind: "idle" } | { kind: "running" } | { kind: "failed"; message: string };
 
@@ -94,20 +94,17 @@ export function OmoSection() {
 
   return (
     <section className={css.section}>
-      <SectionHeading title={t("shell.settings.nav.omo")} intro={t("shell.settings.omo.intro")} />
+      <SettingsGroup title={t("shell.settings.nav.omo")} intro={t("shell.settings.omo.intro")} />
       <div className={css.card}>
-        <SettingRow title={t("shell.settings.omo.autoUpdate")} hint={t("shell.settings.omo.autoUpdateHint")}>
-          <Button
-            variant="outline"
-            data-testid={TESTID.omoAutoUpdate}
-            aria-label={t("shell.settings.omo.autoUpdate")}
-            aria-pressed={preferences?.omoAutoUpdate !== false}
+        <SettingsRow title={t("shell.settings.omo.autoUpdate")} description={t("shell.settings.omo.autoUpdateHint")}>
+          <Toggle
+            checked={preferences?.omoAutoUpdate !== false}
             disabled={saving || preferences === null}
-            onClick={toggleUpdate}
-          >
-            {t(preferences?.omoAutoUpdate === false ? "shell.settings.omo.autoUpdateOff" : "shell.settings.omo.autoUpdateOn")}
-          </Button>
-        </SettingRow>
+            label={t("shell.settings.omo.autoUpdate")}
+            testId={TESTID.omoAutoUpdate}
+            onChange={toggleUpdate}
+          />
+        </SettingsRow>
         {update && (
           <p className={update.state === "failed" ? css.rowError : css.cardFooter} role="status"
             data-testid={TESTID.omoUpdateStatus} data-state={update.state}>
@@ -132,7 +129,7 @@ export function OmoSection() {
         </div>
       </div>
       <div className={css.card}>
-        <SettingRow title={t("shell.settings.omo.serverTitle")} hint={t("shell.settings.omo.restartHint")}>
+        <SettingsRow title={t("shell.settings.omo.serverTitle")} description={t("shell.settings.omo.restartHint")}>
           <Button
             variant="outline"
             icon={<IconRefreshOutlineRegular />}
@@ -142,13 +139,13 @@ export function OmoSection() {
           >
             {restart.kind === "running" ? t("shell.settings.omo.restarting") : t("shell.settings.omo.restart")}
           </Button>
-        </SettingRow>
+        </SettingsRow>
         {restart.kind === "failed" && (
           <p className={css.rowError} role="alert">
             {t("shell.settings.omo.restartFailed", { message: restart.message })}
           </p>
         )}
-        <SettingRow title={t("shell.settings.omo.installTitle")} hint={t("shell.settings.omo.installHint")}>
+        <SettingsRow title={t("shell.settings.omo.installTitle")} description={t("shell.settings.omo.installHint")}>
           <Button
             variant="primary"
             icon={<IconDownloadOutlineRegular />}
@@ -158,7 +155,7 @@ export function OmoSection() {
           >
             {installing ? t("shell.onboarding.installing") : t("shell.settings.omo.reinstall")}
           </Button>
-        </SettingRow>
+        </SettingsRow>
         <code className={css.commandLine}>{OMO_INSTALL_COMMAND}</code>
         {installer.phase.kind !== "idle" && (
           <div className={css.cardFooter}>

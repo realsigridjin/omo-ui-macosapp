@@ -7,6 +7,7 @@ import { byTestId, launchApp } from "./helpers.ts";
 async function openLightSettings(page: Page): Promise<void> {
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
   await byTestId(page, TESTID.openSettings).click();
+  await byTestId(page, TESTID.settingsDialog).locator('[data-section="appearance"]').click();
   await byTestId(page, TESTID.settingsThemeLight).click();
   await expect(page.locator("body")).not.toHaveAttribute("data-ds-dark-theme");
 }

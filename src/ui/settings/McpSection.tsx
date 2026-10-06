@@ -4,8 +4,8 @@ import { useT } from "../../i18n";
 import { mcpDisplayStatus } from "../../state/mcp";
 import { useActions, useAppSelector } from "../app-context";
 import { TESTID } from "../testids";
-import { SectionHeading } from "./SectionHeading";
-import css from "./SettingsDialog.module.css";
+import { SettingsGroup } from "./SettingsCard";
+import css from "./SettingsCard.module.css";
 import mcpCss from "./McpSection.module.css";
 
 export function McpSection() {
@@ -28,7 +28,7 @@ export function McpSection() {
   };
   return (
     <section className={css.section} data-testid={TESTID.settingsMcp} aria-busy={loading}>
-      <SectionHeading title={t("shell.settings.nav.mcp")} intro={t("shell.settings.mcp.intro")} />
+      <SettingsGroup title={t("shell.settings.nav.mcp")} intro={t("shell.settings.mcp.intro")} />
       <div className={mcpCss.toolbar}>
         <Button variant="outline" icon={<IconRefreshOutlineRegular />} disabled={loading}
           data-testid={TESTID.mcpRefresh} onClick={() => void actions.loadMcpServers()}>

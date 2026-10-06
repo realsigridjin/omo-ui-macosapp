@@ -23,7 +23,7 @@ test("update checks are nonblocking and the localized setting persists across ap
     launched = await launch("current");
     await openSettings(launched.page);
     await expect(byTestId(launched.page, TESTID.omoUpdateStatus)).toHaveAttribute("data-state", "current");
-    await expect(byTestId(launched.page, TESTID.omoAutoUpdate)).toHaveAttribute("aria-pressed", "true");
+    await expect(byTestId(launched.page, TESTID.omoAutoUpdate)).toHaveAttribute("aria-checked", "true");
     await shot(launched.page, "omo-update-current-desktop");
     await launched.close();
     launched = await launch("offline");
@@ -32,14 +32,14 @@ test("update checks are nonblocking and the localized setting persists across ap
     await expect(launched.page.locator("html")).toHaveAttribute("data-bridge-state", "connected");
     await shot(launched.page, "omo-update-failure-desktop");
     await byTestId(launched.page, TESTID.omoAutoUpdate).click();
-    await expect(byTestId(launched.page, TESTID.omoAutoUpdate)).toHaveAttribute("aria-pressed", "false");
+    await expect(byTestId(launched.page, TESTID.omoAutoUpdate)).toHaveAttribute("aria-checked", "false");
     expect(await launched.page.evaluate(() => window.omo.getPreferences())).toMatchObject({ omoAutoUpdate: false });
     await launched.page.evaluate(() => window.omo.setPreferences({ locale: "ko" }));
     await launched.close();
     launched = await launch("offline");
     await openSettings(launched.page);
     await expect(byTestId(launched.page, TESTID.omoUpdateStatus)).toHaveAttribute("data-state", "disabled");
-    await expect(byTestId(launched.page, TESTID.omoAutoUpdate)).toHaveAttribute("aria-pressed", "false");
+    await expect(byTestId(launched.page, TESTID.omoAutoUpdate)).toHaveAttribute("aria-checked", "false");
     await shot(launched.page, "omo-update-disabled-ko-desktop");
     await launched.app.evaluate(({ BrowserWindow }) => { BrowserWindow.getAllWindows()[0]?.setContentSize(600, 820); });
     await shot(launched.page, "omo-update-disabled-ko-narrow");
