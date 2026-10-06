@@ -1,6 +1,9 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import clsx from "clsx";
 import {
+  IconChevronDownOutlineRegular,
+  IconDataOutlineMedium,
   IconCloseCircleFillRegular,
   IconPanelLeftOutlineRegular,
   IconQueueOutlineRegular,
@@ -13,7 +16,7 @@ import {
 import type { StateDotState } from "@deepseek-ai/dsh-client-ui-primitives";
 import type { BridgeState, BridgeStatus } from "../../../shared/ipc";
 import { selectThreadsByWorkspace } from "../../state";
-import type { ThreadSummary } from "../../state";
+import type { ThreadSummary, WorkspaceGroup } from "../../state";
 import { useT } from "../../i18n";
 import { StoreContext, useActions, useAppSelector } from "../app-context";
 import { APP_VERSION, isPreRelease } from "../app-version";
@@ -21,12 +24,13 @@ import { threadTitle } from "../conversation/format";
 import { BrandMark, PlusCircleGlyph } from "../glyphs";
 import { useNewSessionFlow } from "../new-session";
 import { TESTID } from "../testids";
-import { uiState } from "../ui-state";
+import { uiState, updatePreferences, useUiState } from "../ui-state";
 import { DeleteThreadDialog } from "./DeleteThreadDialog";
 import type { DeleteTarget } from "./DeleteThreadDialog";
 import { ThreadRow, WorkspaceRow } from "./Rows";
 import { filterGroups, isRunning } from "./thread-filter";
 import type { ThreadPeriod } from "./thread-filter";
+import { partitionSettled, type SettleConfig } from "./settle";
 import css from "./Sidebar.module.css";
 
 const DOT_STATE: Record<BridgeState, StateDotState> = {
@@ -50,6 +54,38 @@ function useNowMs(): number {
     return () => window.clearInterval(timer);
   }, []);
   return now;
+}
+
+/** Drops threads whose last activity moved forward out of the settled and unsettled preference lists. */
+function useUnsettleOnActivity(): void {
+  const store = useContext(StoreContext);
+  useEffect(() => {
+    if (store === null) return;
+    const seen = new Map<string, number>();
+    const check = (): void => {
+      const preferences = uiState.get().preferences;
+      const changed: string[] = [];
+      for (const [id, summary] of Object.entries(store.getState().threads)) {
+        const previous = seen.get(id);
+        if (previous === summary.updatedAt) continue;
+        seen.set(id, summary.updatedAt);
+        if (previous !== undefined && summary.updatedAt > previous) changed.push(id);
+      }
+      if (changed.length === 0 || preferences === null) return;
+      const drop = (ids: readonly string[]): string[] => ids.filter((id) => !changed.includes(id));
+      const settledThreads = drop(preferences.settledThreads);
+      const unsettledThreads = drop(preferences.unsettledThreads);
+      if (
+        settledThreads.length === preferences.settledThreads.length &&
+        unsettledThreads.length === preferences.unsettledThreads.length
+      ) return;
+      updatePreferences({ settledThreads, unsettledThreads }).catch((error: unknown) => {
+        console.warn("Could not un-settle threads after new activity", error);
+      });
+    };
+    check();
+    return store.subscribe(check);
+  }, [store]);
 }
 
 function ConnectionDot({ bridge }: { bridge: BridgeStatus | null }) {
@@ -84,10 +120,13 @@ export function Sidebar() {
   const threadsLoaded = useAppSelector((state) => state.threadsLoaded);
   const hasMore = useAppSelector((state) => state.threadsCursor !== null);
   const bridge = useAppSelector((state) => state.bridge);
+  const { preferences } = useUiState();
   const connected = bridge?.state === "connected";
   const disconnectedHint = connected ? undefined : t("shell.newSessionDisconnected");
   const nowMs = useNowMs();
+  useUnsettleOnActivity();
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
+  const [settledOpen, setSettledOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [runningOnly, setRunningOnly] = useState(false);
   const [period, setPeriod] = useState<ThreadPeriod>("any");
@@ -97,14 +136,33 @@ export function Sidebar() {
   groupsRef.current = groups;
   const searchRef = useRef<HTMLInputElement | null>(null);
 
+  const settleConfig = useMemo<SettleConfig>(
+    () => ({
+      autoSettle: preferences?.autoSettle ?? true,
+      autoSettleDays: preferences?.autoSettleDays ?? 3,
+      settledThreads: preferences?.settledThreads ?? [],
+      unsettledThreads: preferences?.unsettledThreads ?? [],
+    }),
+    [preferences?.autoSettle, preferences?.autoSettleDays, preferences?.settledThreads, preferences?.unsettledThreads, preferences],
+  );
+  const split = useMemo(() => partitionSettled(groups, settleConfig, nowMs), [groups, settleConfig, nowMs]);
+  const settledRef = useRef(split.settled);
+  settledRef.current = split.settled;
+  const settledGroup = useMemo<WorkspaceGroup>(() => ({ cwd: "settled", label: "", threads: split.settled }), [split]);
+
   const fallbackTitle = t("shell.newSession");
   const visibleGroups = useMemo(
-    () => filterGroups(groups, { query, runningOnly, period }, nowMs, (thread: ThreadSummary) => threadTitle(thread, fallbackTitle)),
-    [groups, query, runningOnly, period, nowMs, fallbackTitle],
+    () => filterGroups(split.groups, { query, runningOnly, period }, nowMs, (thread: ThreadSummary) => threadTitle(thread, fallbackTitle)),
+    [split, query, runningOnly, period, nowMs, fallbackTitle],
   );
-  const runningCount = useMemo(() => groups.reduce((count, group) => count + group.threads.filter(isRunning).length, 0), [groups]);
+  const visibleSettled = useMemo(
+    () => filterGroups([settledGroup], { query, runningOnly, period }, nowMs, (thread: ThreadSummary) => threadTitle(thread, fallbackTitle))[0]?.threads ?? [],
+    [settledGroup, query, runningOnly, period, nowMs, fallbackTitle],
+  );
+  const runningCount = useMemo(() => split.groups.reduce((count, group) => count + group.threads.filter(isRunning).length, 0), [split]);
   const searching = query.trim() !== "";
   const filtering = runningOnly || period !== "any";
+  const settledExpanded = settledOpen || searching;
 
   const expand = (cwd: string): void => {
     setCollapsed((current) => {
@@ -127,7 +185,30 @@ export function Sidebar() {
     if (activeThreadId === null) return;
     const owner = groupsRef.current.find((group) => group.threads.some((thread) => thread.id === activeThreadId));
     if (owner !== undefined) expand(owner.cwd);
+    if (settledRef.current.some((thread) => thread.id === activeThreadId)) setSettledOpen(true);
   }, [activeThreadId]);
+
+  const setSettled = (threadId: string, settled: boolean): void => {
+    const preferences = uiState.get().preferences;
+    if (preferences === null) return;
+    const settledThreads = settled
+      ? [...preferences.settledThreads.filter((id) => id !== threadId), threadId]
+      : preferences.settledThreads.filter((id) => id !== threadId);
+    const unsettledThreads = settled
+      ? preferences.unsettledThreads.filter((id) => id !== threadId)
+      : [...preferences.unsettledThreads.filter((id) => id !== threadId), threadId];
+    updatePreferences({ settledThreads, unsettledThreads }).catch((error: unknown) => {
+      store?.dispatch({
+        type: "notice/pushed",
+        notice: {
+          id: crypto.randomUUID(),
+          level: "error",
+          message: error instanceof Error ? error.message : String(error),
+          threadId: null,
+        },
+      });
+    });
+  };
 
   const loadMore = async (): Promise<void> => {
     setLoadingMore(true);
@@ -249,7 +330,7 @@ export function Sidebar() {
               <div>{t("shell.noSessions")}</div>
             </div>
           )}
-          {(searching || filtering) && groups.length > 0 && visibleGroups.length === 0 && (
+          {(searching || filtering) && groups.length > 0 && visibleGroups.length === 0 && visibleSettled.length === 0 && (
             <div className={css.emptyState} data-testid={TESTID.sidebarNoMatch} role="status">
               <div>{searching ? t("shell.search.noMatch", { query: query.trim() }) : t("shell.filter.noMatch")}</div>
               {filtering && (
@@ -292,6 +373,7 @@ export function Sidebar() {
                       onRename={(threadId, name) => void actions.renameThread(threadId, name)}
                       onRequestDelete={(threadId, title) => setDeleteTarget({ threadId, title })}
                       onReveal={reveal}
+                      onSettle={setSettled}
                     />
                   ))}
               </div>
@@ -313,6 +395,38 @@ export function Sidebar() {
             <span className={css.newProjectLabel}>{t("shell.newProject")}</span>
             <PlusCircleGlyph size={16} className={css.newProjectIcon} />
           </button>
+          <div className={css.settledBlock} data-testid={TESTID.sidebarSettled}>
+            <div className={css.settledDivider} role="separator" />
+            <button
+              type="button"
+              className={css.settledToggle}
+              data-testid={TESTID.sidebarSettledToggle}
+              aria-expanded={settledExpanded}
+              aria-label={t(settledExpanded ? "shell.sidebar.collapseSettled" : "shell.sidebar.expandSettled")}
+              onClick={() => setSettledOpen((open) => !open)}
+            >
+              <IconChevronDownOutlineRegular size={12} className={clsx(css.settledChevron, !settledExpanded && css.settledChevronClosed)} />
+              <span className={css.settledTitle}>{t("shell.sidebar.settled")}</span>
+              <span className={css.settledCount} aria-label={t("shell.sidebar.settledThreads", { count: visibleSettled.length })}>
+                {visibleSettled.length}
+              </span>
+            </button>
+            {settledExpanded &&
+              visibleSettled.map((thread) => (
+                <ThreadRow
+                  key={thread.id}
+                  thread={thread}
+                  active={thread.id === activeThreadId}
+                  nowMs={nowMs}
+                  settled
+                  onOpen={(threadId) => void actions.openThread(threadId)}
+                  onRename={(threadId, name) => void actions.renameThread(threadId, name)}
+                  onRequestDelete={(threadId, title) => setDeleteTarget({ threadId, title })}
+                  onReveal={reveal}
+                  onSettle={setSettled}
+                />
+              ))}
+          </div>
         </div>
       </div>
       <div className={css.foot}>
@@ -326,6 +440,17 @@ export function Sidebar() {
           <IconSettingsOutlineMedium size={16} />
           <span className={css.settingsLabel}>{t("shell.openSettings")}</span>
         </button>
+        <Tooltip label={t("shell.openAccounts")} side="top" align="end" delayMs={300}>
+          <button
+            type="button"
+            className={css.headerButton}
+            data-testid={TESTID.openAccounts}
+            aria-label={t("shell.openAccounts")}
+            onClick={() => uiState.setSettingsOpen(true)}
+          >
+            <IconDataOutlineMedium size={16} />
+          </button>
+        </Tooltip>
         <ConnectionDot bridge={bridge} />
       </div>
       <DeleteThreadDialog target={deleteTarget} onClose={() => setDeleteTarget(null)} />

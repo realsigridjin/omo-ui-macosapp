@@ -13,10 +13,11 @@ import {
 } from "@deepseek-ai/dsh-client-ui-primitives";
 import type { MenuEntry } from "@deepseek-ai/dsh-client-ui-primitives";
 import type { ThreadSummary, WorkspaceGroup } from "../../state";
-import { useT } from "../../i18n";
+import { useLocale, useT } from "../../i18n";
 import { threadTitle } from "../conversation/format";
 import { GripGlyph } from "../glyphs";
 import { TESTID } from "../testids";
+import { useUiState } from "../ui-state";
 import { isRunning } from "./thread-filter";
 import { formatThreadTime } from "./thread-time";
 import { WorkspaceBadge } from "./WorkspaceBadge";
@@ -124,10 +125,15 @@ interface ThreadRowProps {
   onRename(threadId: string, name: string): void;
   onRequestDelete(threadId: string, title: string): void;
   onReveal(cwd: string): void;
+  /** Present (with the current settled state in `settled`) only where the sidebar offers Settle/Unsettle. */
+  settled?: boolean;
+  onSettle?(threadId: string, settled: boolean): void;
 }
 
-export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDelete, onReveal }: ThreadRowProps) {
+export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDelete, onReveal, settled = false, onSettle }: ThreadRowProps) {
   const t = useT();
+  const locale = useLocale();
+  const { preferences } = useUiState();
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const title = threadTitle(thread, t("shell.newSession"));
@@ -158,6 +164,9 @@ export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDe
   }
 
   const items: MenuEntry[] = [
+    ...(onSettle === undefined
+      ? []
+      : [{ id: "settle", label: settled ? t("shell.sidebar.unsettle") : t("shell.sidebar.settle") } as const]),
     { id: "rename", label: t("shell.sidebar.rename"), icon: <IconEditOutlineRegular /> },
     { id: "reveal", label: t("shell.sidebar.revealInFinder"), icon: <IconFolderOpenOutlineRegular /> },
     { type: "separator", id: "danger" },
@@ -167,6 +176,9 @@ export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDe
   const select = (id: string): void => {
     setMenuOpen(false);
     switch (id) {
+      case "settle":
+        onSettle?.(thread.id, !settled);
+        break;
       case "rename":
         setRenaming(true);
         break;
@@ -190,7 +202,7 @@ export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDe
             <span className={css.visuallyHidden}>{t("shell.sidebar.running")}</span>
           </span>
         )}
-        <span className={css.time}>{formatThreadTime(thread.updatedAt, nowMs, t)}</span>
+        <span className={css.time}>{formatThreadTime(thread.updatedAt, nowMs, t, preferences?.timeFormat ?? "system", locale)}</span>
       </button>
       <span className={css.rowActions}>
         <Menu

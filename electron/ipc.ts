@@ -19,6 +19,7 @@ import { RpcRequestError } from "./omo/app-server-client";
 import { runInstaller } from "./omo/installer";
 import { createGit } from "./git-info";
 import type { Git } from "./git-info";
+import { showThreadNotification } from "./notifications";
 import { createOpenWorkspace } from "./open-workspace";
 import { createWorkspaceSettings } from "./workspace-settings";
 import type { WorkspaceSettings } from "./workspace-settings";
@@ -67,6 +68,10 @@ function isClientMethod(value: unknown): value is ClientMethod {
 
 function isRequestId(value: unknown): value is RequestId {
   return typeof value === "number" || typeof value === "string";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function requireString(value: unknown, name: string): string {
@@ -199,6 +204,14 @@ export function registerIpc(deps: IpcDeps): () => void {
     }),
     [IPC.getPreferences]: () => prefs.get(),
     [IPC.setPreferences]: (_event, patch) => prefs.set(patch),
+    [IPC.notify]: (_event, payload) => {
+      if (!isRecord(payload)) throw new TypeError("payload must be an object");
+      const { title, body, threadId } = payload;
+      showThreadNotification(
+        { title: requireString(title, "title"), body: requireString(body, "body"), threadId: requireString(threadId, "threadId") },
+        { getWindow, onActivate: (threadId) => send(IPC.notifyClick, threadId) },
+      );
+    },
     [IPC.copyText]: (_event, text) => {
       clipboard.writeText(requireString(text, "text"));
     },

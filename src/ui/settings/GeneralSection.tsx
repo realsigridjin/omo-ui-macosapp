@@ -4,6 +4,7 @@ import type { Preferences } from "../../../shared/ipc";
 import { useT } from "../../i18n";
 import { TESTID } from "../testids";
 import { uiState, updatePreferences, useUiState } from "../ui-state";
+import { BehaviorSettings } from "./BehaviorSettings";
 import { errorMessage } from "./diagnostics";
 import { SettingsCard, SettingsGroup, SettingsRow } from "./SettingsCard";
 import css from "./SettingsCard.module.css";
@@ -48,6 +49,7 @@ export function GeneralSection() {
   return (
     <section className={css.section}>
       <SettingsGroup title={t("shell.settings.nav.general")} intro={t("shell.settings.general.intro")} />
+      <BehaviorSettings />
       <SettingsCard>
         <SettingsRow title={t("shell.settings.general.workspace")} description={t("shell.settings.general.workspaceHint")}>
           <select

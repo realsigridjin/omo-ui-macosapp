@@ -20,7 +20,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
     "test": "vitest run",
     "smoke:bridge": "node scripts/build-electron.mjs && node dist-electron/smoke-bridge.cjs",
-    "test:e2e": "npm run build && playwright test e2e/settings-page.spec.ts e2e/iphone-bridge.spec.ts e2e/mcp.spec.ts e2e/profile-picker.spec.ts e2e/composer-bar.spec.ts e2e/attachments.spec.ts e2e/fake.spec.ts e2e/onboarding.spec.ts e2e/notices.spec.ts e2e/quit.spec.ts e2e/skills.spec.ts e2e/omo-live.spec.ts e2e/shell.spec.ts e2e/btw.spec.ts e2e/long-conversation.spec.ts e2e/sidebar-filters.spec.ts e2e/stuck-turn.spec.ts e2e/theme-transition.spec.ts e2e/working-status.spec.ts e2e/dag.spec.ts e2e/edit-reroll.spec.ts e2e/omo-update.spec.ts e2e/accounts.spec.ts",
+    "test:e2e": "npm run build && playwright test e2e/settings-page.spec.ts e2e/iphone-bridge.spec.ts e2e/mcp.spec.ts e2e/profile-picker.spec.ts e2e/composer-bar.spec.ts e2e/attachments.spec.ts e2e/fake.spec.ts e2e/onboarding.spec.ts e2e/notices.spec.ts e2e/behavior.spec.ts e2e/quit.spec.ts e2e/skills.spec.ts e2e/omo-live.spec.ts e2e/shell.spec.ts e2e/btw.spec.ts e2e/long-conversation.spec.ts e2e/sidebar-filters.spec.ts e2e/stuck-turn.spec.ts e2e/theme-transition.spec.ts e2e/working-status.spec.ts e2e/dag.spec.ts e2e/edit-reroll.spec.ts e2e/omo-update.spec.ts e2e/accounts.spec.ts",
     "test:e2e:real": "npm run build && OMO_UI_E2E_REAL=1 playwright test e2e/real.spec.ts",
     "package:mac": "npm run build && electron-builder --mac --arm64",
     "package:mac:dir": "npm run build && electron-builder --mac --arm64 --dir",

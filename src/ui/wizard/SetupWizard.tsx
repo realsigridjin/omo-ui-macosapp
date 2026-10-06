@@ -13,7 +13,7 @@ import {
 import type { Model } from "../../../shared/protocol";
 import type { Preferences } from "../../../shared/ipc";
 import { selectThreadsByWorkspace } from "../../state";
-import { useT } from "../../i18n";
+import { useLocale, useT } from "../../i18n";
 import type { MessageKey } from "../../i18n";
 import { StoreContext, useActions, useAppSelector } from "../app-context";
 import { resolveEffort } from "../composer/model-groups";
@@ -21,7 +21,7 @@ import { BrandMark } from "../glyphs";
 import { formatThreadTime } from "../sidebar/thread-time";
 import { WorkspaceBadge } from "../sidebar/WorkspaceBadge";
 import { TESTID } from "../testids";
-import { updatePreferences, uiState } from "../ui-state";
+import { updatePreferences, uiState, useUiState } from "../ui-state";
 import css from "./SetupWizard.module.css";
 
 const STEPS = ["welcome", "model", "project", "ready"] as const;
@@ -65,6 +65,8 @@ function folderBasename(cwd: string): string {
 
 export function SetupWizard() {
   const t = useT();
+  const locale = useLocale();
+  const timeFormat = useUiState().preferences?.timeFormat ?? "system";
   const actions = useActions();
   const store = useContext(StoreContext);
   const bridge = useAppSelector((state) => state.bridge);
@@ -347,7 +349,7 @@ export function SetupWizard() {
                             <span className={css.projectMeta}>
                               <span>{t("wizard.project.threadCount", { count: project.count })}</span>
                               {project.lastActivity !== null && project.lastActivity > 0 && (
-                                <span>{formatThreadTime(project.lastActivity, nowMs, t)}</span>
+                                <span>{formatThreadTime(project.lastActivity, nowMs, t, timeFormat, locale)}</span>
                               )}
                             </span>
                           </label>

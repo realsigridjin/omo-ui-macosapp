@@ -18,6 +18,11 @@ export const messages = {
     "notice.noActiveThread": "Open or start a session before sending a message.",
     "notice.steered": "Sent to the running turn.",
     "notice.branchBusy": "Wait for the running turn to finish, or stop it, before editing or regenerating.",
+    "notice.action.open": "Open",
+    "notify.completed": "Turn finished",
+    "notify.failed": "Turn failed: {message}",
+    "notify.approval": "Waiting for your approval",
+    "notify.question": "Waiting for your answer",
   },
   ko: {
     "app.name": "OmO UI",
@@ -38,5 +43,10 @@ export const messages = {
     "notice.noActiveThread": "메시지를 보내기 전에 세션을 열거나 새로 시작하세요.",
     "notice.steered": "실행 중인 턴에 전달했습니다.",
     "notice.branchBusy": "편집하거나 다시 생성하려면 실행 중인 턴이 끝나거나 멈출 때까지 기다리세요.",
+    "notice.action.open": "열기",
+    "notify.completed": "턴이 끝났습니다",
+    "notify.failed": "턴이 실패했습니다: {message}",
+    "notify.approval": "승인이 필요합니다",
+    "notify.question": "답변이 필요합니다",
   },
 } as const;

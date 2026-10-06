@@ -344,6 +344,65 @@
   border-radius: var(--dsw-radius-sm);
 }
 
+.settledBlock {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 14px 2px 0;
+}
+
+.settledDivider {
+  height: 1px;
+  margin: 0 10px 6px;
+  background: var(--dsw-alias-border-l4);
+}
+
+.settledToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settledToggle:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.settledChevron {
+  flex: none;
+  transition: transform 120ms ease;
+}
+
+.settledChevronClosed {
+  transform: rotate(-90deg);
+}
+
+.settledTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.settledCount {
+  flex: none;
+  font-size: 11px;
+  color: var(--dsw-alias-label-caption);
+}
+
 .deleteDialog {
   word-break: keep-all;
   overflow-wrap: break-word;
