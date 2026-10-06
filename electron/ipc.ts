@@ -13,6 +13,8 @@ import type { ClientMethod, ClientParams, RequestId } from "../shared/protocol";
 import { openLogin } from "./accounts/login";
 import { readAccountUsage } from "./accounts/usage";
 import { branchSession } from "./history/branch-session";
+import { readModelMapping, writeModelChain } from "./omo-config";
+import type { ModelRung } from "../shared/ipc";
 import { parseSessionJsonl } from "./history/session-jsonl";
 import { loadTaskWork } from "./history/task-work";
 import { RpcRequestError } from "./omo/app-server-client";
@@ -232,6 +234,16 @@ export function registerIpc(deps: IpcDeps): () => void {
     [IPC.gitInfo]: (_event, cwd) => git.info(requireString(cwd, "cwd")),
     [IPC.gitStatus]: (_event, cwd) => git.status(requireString(cwd, "cwd")),
     [IPC.gitCommitPush]: (_event, cwd, message, push) => git.commitAndPush(requireString(cwd, "cwd"), requireString(message, "message"), push === true),
+    [IPC.readModelMapping]: () => readModelMapping(homeDir),
+    [IPC.setModelChain]: (_event, kind, name, rungs) => {
+      if (kind !== "agents" && kind !== "categories") throw new TypeError("kind must be agents or categories");
+      if (rungs !== null && (!Array.isArray(rungs) || !rungs.every((rung: unknown) => typeof rung === "object" && rung !== null
+        && typeof (rung as Record<string, unknown>)["model"] === "string"
+        && ((rung as Record<string, unknown>)["reasoning"] === null || typeof (rung as Record<string, unknown>)["reasoning"] === "string")))) {
+        throw new TypeError("rungs must be null or a list of { model, reasoning }");
+      }
+      return writeModelChain(homeDir, kind, requireString(name, "name"), rungs as ModelRung[] | null);
+    },
     [IPC.getPermissionPreset]: (_event, cwd) => workspaceSettings.getPermissionPreset(requireString(cwd, "cwd")),
     [IPC.setPermissionPreset]: (_event, cwd, preset) => {
       if (typeof preset !== "string" || !(PERMISSION_PRESETS as readonly string[]).includes(preset)) {

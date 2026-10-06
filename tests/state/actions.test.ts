@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { OMO_INSTALL_COMMAND } from "../../shared/ipc";
-import type { AccountUsage, BranchPoint, BranchResult, BridgeStatus, GitCommitResult, GitInfo, HistoryResult, HistoryTurn, OmoBridgeApi, OpenTarget, OpenTargetId, PermissionPreset, Preferences } from "../../shared/ipc";
+import type { AccountUsage, ModelMapping, BranchPoint, BranchResult, BridgeStatus, GitCommitResult, GitInfo, HistoryResult, HistoryTurn, OmoBridgeApi, OpenTarget, OpenTargetId, PermissionPreset, Preferences } from "../../shared/ipc";
 import type {
   ClientMethod,
   ClientParams,
@@ -67,6 +67,9 @@ class FakeBridge implements OmoBridgeApi {
   getIphoneStatus(): ReturnType<OmoBridgeApi["getIphoneStatus"]> { return Promise.resolve({ enabled: false, state: "searching", devices: [] }); }
   onIphoneStatus(): () => void { return () => {}; }
   async notify(): Promise<void> {}
+  mapping: ModelMapping = { path: "/home/.omo/omo.jsonc", agents: {}, categories: {} };
+  async readModelMapping(): Promise<ModelMapping> { return this.mapping; }
+  async setModelChain(): Promise<ModelMapping> { return this.mapping; }
   onNotifyClick(): () => void { return () => {}; }
   readonly platform = "darwin";
   readonly calls: Array<{ method: ClientMethod; params: unknown }> = [];

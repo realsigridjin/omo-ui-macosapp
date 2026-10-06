@@ -7,6 +7,8 @@ const common = {
   format: "cjs",
   sourcemap: true,
   external: ["electron"],
+  // Prefer ESM entries: a UMD build such as jsonc-parser's requires its own files at runtime, outside the bundle.
+  mainFields: ["module", "main"],
   logLevel: "warning",
 };
 

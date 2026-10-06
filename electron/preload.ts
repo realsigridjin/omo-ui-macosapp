@@ -4,6 +4,9 @@ import type {
   IphoneStatus,
   BranchPoint,
   AccountUsage,
+  ModelMapping,
+  ModelMappingKind,
+  ModelRung,
   BranchResult,
   BridgeStatus,
   Diagnostics,
@@ -61,6 +64,8 @@ const CHANNELS = {
   gitInfo: "git:info",
   gitStatus: "git:status",
   gitCommitPush: "git:commit-push",
+  readModelMapping: "omo-config:models:read",
+  setModelChain: "omo-config:models:set",
   getPermissionPreset: "workspace:preset:get",
   setPermissionPreset: "workspace:preset:set",
 } as const satisfies typeof IPC;
@@ -124,6 +129,9 @@ const api = {
   gitStatus: (cwd: string): Promise<string[]> => invoke(CHANNELS.gitStatus, cwd),
   gitCommitPush: (cwd: string, message: string, push: boolean): Promise<GitCommitResult> =>
     invoke(CHANNELS.gitCommitPush, cwd, message, push),
+  readModelMapping: (): Promise<ModelMapping> => invoke(CHANNELS.readModelMapping),
+  setModelChain: (kind: ModelMappingKind, name: string, rungs: ModelRung[] | null): Promise<ModelMapping> =>
+    invoke(CHANNELS.setModelChain, kind, name, rungs),
   getPermissionPreset: (cwd: string): Promise<PermissionPreset> => invoke(CHANNELS.getPermissionPreset, cwd),
   setPermissionPreset: (cwd: string, preset: PermissionPreset): Promise<void> => invoke(CHANNELS.setPermissionPreset, cwd, preset),
   platform: process.platform,

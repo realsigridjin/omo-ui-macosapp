@@ -6,6 +6,7 @@ import { useAppSelector } from "../app-context";
 import { TESTID } from "../testids";
 import { updatePreferences, useUiState } from "../ui-state";
 import { errorMessage } from "./diagnostics";
+import { ModelMappingSettings } from "./ModelMappingSettings";
 import { SettingsCard, SettingsGroup, SettingsRow } from "./SettingsCard";
 import css from "./SettingsCard.module.css";
 
@@ -52,6 +53,7 @@ export function ModelSection() {
           </select>
         </SettingsRow>
       </SettingsCard>
+      <ModelMappingSettings />
       <SettingsGroup title={t("shell.settings.model.available")} intro={t("shell.settings.model.availableHint")} />
       {visible.length === 0 ? (
         <p className={css.muted}>{t("shell.settings.model.loading")}</p>

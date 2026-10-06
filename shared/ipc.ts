@@ -307,7 +307,33 @@ export interface NotifyPayload {
   threadId: string;
 }
 
+/** `"[native]"` sections of `~/.omo/omo.jsonc` that map a research agent or a task category to models. */
+export type ModelMappingKind = "agents" | "categories";
+
+/** One rung of a fallback chain: a provider/model id and an optional reasoning level such as "high". */
+export interface ModelRung {
+  model: string;
+  reasoning: string | null;
+}
+
+/** The overrides `~/.omo/omo.jsonc` holds; a name without an entry uses omo's built-in chain. */
+export interface ModelMapping {
+  path: string;
+  agents: Record<string, ModelRung[]>;
+  categories: Record<string, ModelRung[]>;
+}
+
+/** Built-in research agents and task categories omo 5.1 resolves models for. */
+export const MODEL_MAPPING_NAMES: Readonly<Record<ModelMappingKind, readonly string[]>> = {
+  agents: ["explore", "librarian", "plan-consultant", "plan-reviewer", "multimodal-looker", "omo-native-code-reviewer", "omo-native-gate-reviewer", "omo-native-qa-executor"],
+  categories: ["quick", "unspecified-low", "unspecified-high", "deep-low", "deep-high", "ultrabrain", "architect", "visual-engineering", "artistry", "writing"],
+};
+
 export interface OmoBridgeApi {
+  /** Reads the agent and category model overrides from `~/.omo/omo.jsonc`. */
+  readModelMapping(): Promise<ModelMapping>;
+  /** Sets one chain (`null` restores omo's built-in chain) and resolves the mapping after the write. */
+  setModelChain(kind: ModelMappingKind, name: string, rungs: ModelRung[] | null): Promise<ModelMapping>;
   /** Reads every stored subscription account's usage windows; one failing account never blanks the others. */
   readAccountUsage(): Promise<AccountUsage[]>;
   /** Opens omo in Terminal running its own sign-in command for `provider` ("/claude-account add", "/gpt-account add", else "/login"). */
@@ -405,6 +431,8 @@ export const IPC = {
   gitInfo: "git:info",
   gitStatus: "git:status",
   gitCommitPush: "git:commit-push",
+  readModelMapping: "omo-config:models:read",
+  setModelChain: "omo-config:models:set",
   getPermissionPreset: "workspace:preset:get",
   setPermissionPreset: "workspace:preset:set",
 } as const;
