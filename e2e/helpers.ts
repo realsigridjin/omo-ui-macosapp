@@ -45,16 +45,22 @@ export interface LaunchedApp {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** Seeds onboardingCompleted into a fresh userData so existing specs never meet the wizard; an existing file wins. */
+/**
+ * Marks onboarding completed in userData's preferences so specs never meet the wizard. Preferences a spec wrote
+ * itself are kept; an explicit onboardingCompleted in them wins.
+ */
 function seedSkipOnboarding(userData: string): void {
   const file = path.join(userData, "preferences.json");
+  let existing: Record<string, unknown> = {};
   try {
-    readFileSync(file);
+    const parsed: unknown = JSON.parse(readFileSync(file, "utf8"));
+    if (isRecord(parsed)) existing = parsed;
   } catch (error) {
     if (!isRecord(error) || error["code"] !== "ENOENT") throw error;
     mkdirSync(userData, { recursive: true });
-    writeFileSync(file, `${JSON.stringify({ onboardingCompleted: true })}\n`);
   }
+  if ("onboardingCompleted" in existing) return;
+  writeFileSync(file, `${JSON.stringify({ ...existing, onboardingCompleted: true })}\n`);
 }
 
 export function tempDir(label: string): string {
