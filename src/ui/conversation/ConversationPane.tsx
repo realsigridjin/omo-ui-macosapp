@@ -204,16 +204,14 @@ export function ConversationPane() {
   const activity = useMemo(
     () =>
       threadId === null ? null : (
-        <>
-          <ActivityToggle threadId={threadId} open={showActivity} controlsId={activityId} onToggle={toggleActivity} />
-          <SideToggle />
-        </>
+        <ActivityToggle threadId={threadId} open={showActivity} controlsId={activityId} onToggle={toggleActivity} />
       ),
     [threadId, showActivity, activityId, toggleActivity],
   );
+  const panels = useMemo(() => (threadId === null ? null : <SideToggle />), [threadId]);
   return (
     <section className={css.root} data-testid={TESTID.conversation}>
-      <ConversationHeader active={threadId !== null} thread={thread} running={turnActive} activity={activity} />
+      <ConversationHeader active={threadId !== null} thread={thread} running={turnActive} activity={activity} panels={panels} />
       {threadId !== null && showActivity && <ActivityPanel threadId={threadId} id={activityId} />}
       {threadId === null ? (
         <EmptyHero />
