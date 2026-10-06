@@ -1,0 +1,77 @@
+.bar {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--dsh-composer-card-max-width, 760px);
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--dsw-radius-sm);
+  color: var(--dsw-alias-label-caption);
+  font-size: 12px;
+  line-height: 18px;
+  user-select: none;
+}
+
+.folder,
+.branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  height: 22px;
+  padding: 0 6px;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-caption);
+}
+
+.folder {
+  background: transparent;
+  cursor: pointer;
+}
+
+.folder:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.folder:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+}
+
+.branch {
+  flex: none;
+  max-width: 60%;
+}
+
+.folderLabel,
+.branchName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon {
+  flex: none;
+}
+
+.chevron {
+  flex: none;
+  color: var(--dsw-alias-label-dimmed);
+}
+
+.counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}

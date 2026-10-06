@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { OMO_INSTALL_COMMAND } from "../../shared/ipc";
-import type { AccountUsage, BranchPoint, BranchResult, BridgeStatus, HistoryResult, HistoryTurn, OmoBridgeApi, OpenTarget, OpenTargetId, Preferences } from "../../shared/ipc";
+import type { AccountUsage, BranchPoint, BranchResult, BridgeStatus, GitCommitResult, GitInfo, HistoryResult, HistoryTurn, OmoBridgeApi, OpenTarget, OpenTargetId, PermissionPreset, Preferences } from "../../shared/ipc";
 import type {
   ClientMethod,
   ClientParams,
@@ -200,6 +200,19 @@ class FakeBridge implements OmoBridgeApi {
   async openWorkspace(): Promise<OpenTargetId> {
     return "finder";
   }
+  async gitInfo(): Promise<GitInfo | null> {
+    return null;
+  }
+  async gitStatus(): Promise<string[]> {
+    return [];
+  }
+  async gitCommitPush(): Promise<GitCommitResult> {
+    return { committed: false, pushed: false, pushSkipped: null, commitHash: null };
+  }
+  async getPermissionPreset(): Promise<PermissionPreset> {
+    return "full-access";
+  }
+  async setPermissionPreset(): Promise<void> {}
 }
 
 function waitForState(store: AppStore, predicate: (state: AppState) => boolean, timeoutMs = 2_000): Promise<AppState> {

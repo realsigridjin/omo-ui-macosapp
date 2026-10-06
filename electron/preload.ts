@@ -7,7 +7,10 @@ import type {
   BranchResult,
   BridgeStatus,
   Diagnostics,
+  GitCommitResult,
+  GitInfo,
   HistoryResult,
+  PermissionPreset,
   TaskWork,
   InstallLogLine,
   InstallResult,
@@ -52,6 +55,11 @@ const CHANNELS = {
   revealPath: "app:reveal-path",
   listOpenTargets: "app:list-open-targets",
   openWorkspace: "app:open-workspace",
+  gitInfo: "git:info",
+  gitStatus: "git:status",
+  gitCommitPush: "git:commit-push",
+  getPermissionPreset: "workspace:preset:get",
+  setPermissionPreset: "workspace:preset:set",
 } as const satisfies typeof IPC;
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
@@ -107,6 +115,12 @@ const api = {
   listOpenTargets: (): Promise<OpenTarget[]> => invoke(CHANNELS.listOpenTargets),
   openWorkspace: (cwd: string, target?: OpenTargetId | null): Promise<OpenTargetId> =>
     invoke(CHANNELS.openWorkspace, cwd, target ?? null),
+  gitInfo: (cwd: string): Promise<GitInfo | null> => invoke(CHANNELS.gitInfo, cwd),
+  gitStatus: (cwd: string): Promise<string[]> => invoke(CHANNELS.gitStatus, cwd),
+  gitCommitPush: (cwd: string, message: string, push: boolean): Promise<GitCommitResult> =>
+    invoke(CHANNELS.gitCommitPush, cwd, message, push),
+  getPermissionPreset: (cwd: string): Promise<PermissionPreset> => invoke(CHANNELS.getPermissionPreset, cwd),
+  setPermissionPreset: (cwd: string, preset: PermissionPreset): Promise<void> => invoke(CHANNELS.setPermissionPreset, cwd, preset),
   platform: process.platform,
 } satisfies OmoBridgeApi;
 

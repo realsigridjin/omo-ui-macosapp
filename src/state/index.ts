@@ -45,6 +45,7 @@ export {
   selectDagActivity,
   resolveComposerModel,
   selectActiveConversation,
+  selectActiveCwd,
   selectActiveSessionModel,
   selectIsTurnActive,
   selectSkillCatalog,
