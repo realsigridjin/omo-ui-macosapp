@@ -7,6 +7,7 @@ import { TESTID } from "../testids";
 import { revealThemePreference } from "../theme";
 import type { TestId } from "../testids";
 import { uiState, updatePreferences, useUiState } from "../ui-state";
+import { BehaviorSettings } from "./BehaviorSettings";
 import { errorMessage } from "./diagnostics";
 import { SectionHeading, SettingRow } from "./SectionHeading";
 import css from "./SettingsDialog.module.css";
@@ -74,6 +75,7 @@ export function GeneralSection() {
   return (
     <section className={css.section}>
       <SectionHeading title={t("shell.settings.nav.general")} intro={t("shell.settings.general.intro")} />
+      <BehaviorSettings />
       <div className={css.card}>
         <SettingRow title={t("shell.settings.theme")} hint={t("shell.settings.theme.hint")}>
           <ThemeChoice value={theme} onChange={(next, control) => revealThemePreference(next, control, () => save({ theme: next }))} />

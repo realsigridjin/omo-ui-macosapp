@@ -418,3 +418,21 @@
     transition: none;
   }
 }
+
+.numberInput {
+  width: 72px;
+  height: 32px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-fill-primary);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  text-align: right;
+}
+
+.numberInput:disabled {
+  opacity: 0.5;
+}

@@ -48,17 +48,23 @@ describe("workspaceHue", () => {
 
 describe("formatThreadTime", () => {
   const en = (key: Parameters<typeof translate>[1], vars?: Parameters<typeof translate>[2]) => translate("en", key, vars);
-  const now = 10 * DAY;
+  const now = new Date(2026, 5, 15, 15, 0).getTime();
 
-  it("buckets into now, minutes, hours and days", () => {
-    expect(formatThreadTime(now - 20_000, now, en)).toBe("now");
-    expect(formatThreadTime(now - 5 * MIN, now, en)).toBe("5m");
-    expect(formatThreadTime(now - 2 * HOUR, now, en)).toBe("2h");
-    expect(formatThreadTime(now - 3 * DAY, now, en)).toBe("3d");
+  it("buckets into now, minutes and hours within a day", () => {
+    expect(formatThreadTime(now - 20_000, now, en, "system", "en-US")).toBe("now");
+    expect(formatThreadTime(now - 5 * MIN, now, en, "system", "en-US")).toBe("5m");
+    expect(formatThreadTime(now - 2 * HOUR, now, en, "system", "en-US")).toBe("2h");
+  });
+
+  it("shows a clock honoring the time format from a day on", () => {
+    const at = new Date(2026, 5, 11, 9, 5).getTime();
+    expect(formatThreadTime(at, now, en, "12h", "en-US")).toBe("Jun 11, 9:05 AM");
+    expect(formatThreadTime(at, now, en, "24h", "en-US")).toBe("Jun 11, 09:05");
+    expect(formatThreadTime(at, now, en, "system", "en-US")).toMatch(/Jun 11, (9:05 AM|09:05)/);
   });
 
   it("never reports a future time as anything but now", () => {
-    expect(formatThreadTime(now + HOUR, now, en)).toBe("now");
+    expect(formatThreadTime(now + HOUR, now, en, "system", "en-US")).toBe("now");
   });
 });
 

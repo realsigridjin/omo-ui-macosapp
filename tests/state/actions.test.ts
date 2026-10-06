@@ -66,6 +66,8 @@ class FakeBridge implements OmoBridgeApi {
   loadTaskWork(): ReturnType<OmoBridgeApi["loadTaskWork"]> { return Promise.resolve([]); }
   getIphoneStatus(): ReturnType<OmoBridgeApi["getIphoneStatus"]> { return Promise.resolve({ enabled: false, state: "searching", devices: [] }); }
   onIphoneStatus(): () => void { return () => {}; }
+  async notify(): Promise<void> {}
+  onNotifyClick(): () => void { return () => {}; }
   readonly platform = "darwin";
   readonly calls: Array<{ method: ClientMethod; params: unknown }> = [];
   readonly responses: Array<{ id: RequestId; result: unknown }> = [];
@@ -85,7 +87,7 @@ class FakeBridge implements OmoBridgeApi {
   });
   mcp: (params: ClientParams<"mcpServerStatus/list">) => unknown = () => ({ data: [], nextCursor: null });
   status = bridgeStatus("starting");
-  preferences: Preferences = { theme: "system", locale: "system", lastWorkspace: null, recentWorkspaces: [], modelId: null };
+  preferences: Preferences = { theme: "system", locale: "system", lastWorkspace: null, recentWorkspaces: [], modelId: null, threadNotifications: "background", inAppNotifications: true, timeFormat: "system", autoSettle: true, autoSettleDays: 3, settledThreads: [], unsettledThreads: [] };
   private readonly statusListeners = new Set<(status: BridgeStatus) => void>();
   private readonly handlers: Handlers = {
     "mcpServerStatus/list": (params) => this.mcp(params) as ClientResult<"mcpServerStatus/list">,

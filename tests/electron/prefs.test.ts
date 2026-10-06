@@ -58,6 +58,52 @@ describe("PreferencesStore", () => {
     expect(next.recentWorkspaces).toEqual(many.slice(0, 10));
   });
 
+  it("defaults the behaviour fields and backfills old preference files", async () => {
+    await writeFile(path.join(dir, "preferences.json"), JSON.stringify({ theme: "dark" }));
+    const store = new PreferencesStore(dir);
+    expect(store.get()).toMatchObject({
+      threadNotifications: "background",
+      inAppNotifications: true,
+      timeFormat: "system",
+      autoSettle: true,
+      autoSettleDays: 3,
+      settledThreads: [],
+      unsettledThreads: [],
+    });
+  });
+
+  it("validates thread notification and time format choices", () => {
+    const store = new PreferencesStore(dir);
+    expect(store.set({ threadNotifications: "always" }).threadNotifications).toBe("always");
+    expect(store.set({ threadNotifications: "sometimes" }).threadNotifications).toBe("always");
+    expect(store.set({ threadNotifications: 7 }).threadNotifications).toBe("always");
+    expect(store.set({ timeFormat: "24h" }).timeFormat).toBe("24h");
+    expect(store.set({ timeFormat: "24" }).timeFormat).toBe("24h");
+    expect(store.set({ inAppNotifications: false }).inAppNotifications).toBe(false);
+    expect(store.set({ inAppNotifications: "no" }).inAppNotifications).toBe(false);
+    expect(store.set({ autoSettle: false }).autoSettle).toBe(false);
+    expect(store.set({ autoSettle: 0 }).autoSettle).toBe(false);
+  });
+
+  it("clamps auto-settle days into 1..365 and ignores non-numbers", () => {
+    const store = new PreferencesStore(dir);
+    expect(store.set({ autoSettleDays: 0 }).autoSettleDays).toBe(1);
+    expect(store.set({ autoSettleDays: -5 }).autoSettleDays).toBe(1);
+    expect(store.set({ autoSettleDays: 400 }).autoSettleDays).toBe(365);
+    expect(store.set({ autoSettleDays: 3.6 }).autoSettleDays).toBe(4);
+    expect(store.set({ autoSettleDays: "7" }).autoSettleDays).toBe(4);
+    expect(new PreferencesStore(dir).get().autoSettleDays).toBe(4);
+  });
+
+  it("bounds and deduplicates settled and unsettled thread ids", () => {
+    const store = new PreferencesStore(dir);
+    const many = Array.from({ length: 205 }, (_, index) => `t${index}`);
+    const next = store.set({ settledThreads: ["a", "a", "", 4, ...many] });
+    expect(next.settledThreads).toEqual(many.slice(-200));
+    expect(store.set({ settledThreads: "x" }).settledThreads).toEqual(many.slice(-200));
+    expect(store.set({ unsettledThreads: ["u", "u"] }).unsettledThreads).toEqual(["u"]);
+  });
+
   it("persists atomically so a new store reads the saved values", async () => {
     new PreferencesStore(dir).set({ theme: "light", locale: "ko", lastWorkspace: "/repo", modelId: null });
     expect(await readdir(dir)).toEqual(["preferences.json"]);

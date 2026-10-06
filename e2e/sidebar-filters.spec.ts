@@ -6,6 +6,7 @@ import { byTestId, launchApp, send, tempDir, threadRow, type LaunchedApp } from 
 
 let fakeHome = "";
 let pickDir = "";
+let userData = "";
 let launched: LaunchedApp | null = null;
 
 const current = (): LaunchedApp => {
@@ -19,6 +20,9 @@ const periodPill = (page: Page, period: string): Locator =>
 test.beforeAll(async () => {
   fakeHome = tempDir("fake-home");
   pickDir = tempDir("workspace");
+  // These seeds are three days old and older; auto-settle would move them into the Settled section.
+  userData = tempDir("user-data");
+  writeFileSync(path.join(userData, "preferences.json"), JSON.stringify({ autoSettle: false }));
   const now = Date.now() / 1000;
   const seedFile = path.join(fakeHome, "seed.json");
   writeFileSync(
@@ -29,13 +33,13 @@ test.beforeAll(async () => {
       { id: "forty-days", cwd: pickDir, name: "Forty days old", preview: "forty", updatedAt: now - 40 * 86400 },
     ]),
   );
-  launched = await launchApp({ omo: "fake", fakeHome, pickDir, extraEnv: { FAKE_OMO_SEED_THREADS: seedFile } });
+  launched = await launchApp({ omo: "fake", fakeHome, userData, pickDir, extraEnv: { FAKE_OMO_SEED_THREADS: seedFile } });
 });
 
 test.afterAll(async () => {
   await launched?.close();
   launched = null;
-  for (const dir of [fakeHome, pickDir]) if (dir !== "") rmSync(dir, { recursive: true, force: true });
+  for (const dir of [fakeHome, pickDir, userData]) if (dir !== "") rmSync(dir, { recursive: true, force: true });
 });
 
 test("period pills keep only threads updated within the period, one period at a time", async () => {

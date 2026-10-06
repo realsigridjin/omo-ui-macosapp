@@ -114,6 +114,8 @@ export interface Notice {
   code?: NoticeCode;
   /** "side" renders the notice inside the side chat panel of `threadId` (its main thread) instead of as a toast. */
   scope?: "side";
+  /** "open-thread" renders an Open action that activates `threadId` (a notification about another thread). */
+  action?: "open-thread";
 }
 
 export interface ComposerState {

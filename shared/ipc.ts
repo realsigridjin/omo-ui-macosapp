@@ -73,6 +73,12 @@ export type LocalePreference = "system" | "en" | "ko";
 
 export type ModelProfile = "daily-normal" | "daily-heavy" | "geeky-normal" | "geeky-heavy";
 
+/** When macOS notifications fire for threads other than the active one. */
+export type ThreadNotificationPreference = "off" | "background" | "always";
+
+/** How every clock time renders; "system" follows the OS clock preference. */
+export type TimeFormatPreference = "system" | "12h" | "24h";
+
 export interface Preferences {
   /** Automatic native omo updates on app launch; omitted in older preferences means enabled. */
   omoAutoUpdate?: boolean;
@@ -85,6 +91,20 @@ export interface Preferences {
   /** Model id chosen in the composer, or null for the omo default. */
   modelId: string | null;
   modelProfile?: ModelProfile | null;
+  /** When macOS notifications fire for threads other than the active one. */
+  threadNotifications: ThreadNotificationPreference;
+  /** Whether a focused window also shows an in-app toast for other threads' outcomes. */
+  inAppNotifications: boolean;
+  /** How every clock time renders; "system" follows the OS clock preference. */
+  timeFormat: TimeFormatPreference;
+  /** Whether inactive sidebar threads settle automatically after `autoSettleDays`. */
+  autoSettle: boolean;
+  /** Whole days of inactivity before an idle thread auto-settles, clamped to 1..365. */
+  autoSettleDays: number;
+  /** Thread ids the user settled manually; any new activity un-settles the thread again. */
+  settledThreads: string[];
+  /** Thread ids the user unsettled manually, blocking auto-settle until their next activity. */
+  unsettledThreads: string[];
 }
 
 /** One turn reconstructed from a session JSONL file. */
@@ -196,6 +216,13 @@ export interface AccountUsage {
   message: string | null;
 }
 
+/** Identifies the thread a notification or toast is about, so opening it stays one hop. */
+export interface NotifyPayload {
+  title: string;
+  body: string;
+  threadId: string;
+}
+
 export interface OmoBridgeApi {
   /** Reads every stored subscription account's usage windows; one failing account never blanks the others. */
   readAccountUsage(): Promise<AccountUsage[]>;
@@ -234,6 +261,10 @@ export interface OmoBridgeApi {
   getDiagnostics(): Promise<Diagnostics>;
   getPreferences(): Promise<Preferences>;
   setPreferences(patch: Partial<Preferences>): Promise<Preferences>;
+  /** Shows a macOS notification for a thread outcome; a click focuses the window and opens the thread. */
+  notify(payload: NotifyPayload): Promise<void>;
+  /** The thread the user clicked in a macOS notification. */
+  onNotifyClick(listener: (threadId: string) => void): () => void;
   onMenuCommand(listener: (command: MenuCommand) => void): () => void;
   copyText(text: string): Promise<void>;
   openExternal(url: string): Promise<void>;
@@ -269,6 +300,8 @@ export const IPC = {
   diagnostics: "app:diagnostics",
   getPreferences: "prefs:get",
   setPreferences: "prefs:set",
+  notify: "app:notify",
+  notifyClick: "app:notify-click",
   menuCommand: "menu:command",
   copyText: "app:copy-text",
   openExternal: "app:open-external",
@@ -291,6 +324,8 @@ export const ENV = {
   qaPickImages: "OMO_UI_QA_PICK_IMAGES",
   /** Overrides Electron's userData directory (tests and QA). */
   userData: "OMO_UI_USER_DATA",
+  /** Appends one JSON line per macOS thread notification to this file (tests and QA); the notification still shows. */
+  qaNotifyLog: "OMO_UI_QA_NOTIFY_LOG",
   /** Renderer dev-server URL loaded instead of dist/index.html. */
   devUrl: "OMO_UI_DEV_URL",
   /** "0" skips the launch-time omo update regardless of the preference (tests and QA). */

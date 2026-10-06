@@ -1,10 +1,15 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { LocalePreference, Preferences, ThemePreference } from "../shared/ipc";
+import type { LocalePreference, Preferences, ThemePreference, ThreadNotificationPreference, TimeFormatPreference } from "../shared/ipc";
 
 const THEMES: readonly ThemePreference[] = ["system", "light", "dark"];
 const LOCALES: readonly LocalePreference[] = ["system", "en", "ko"];
 const MAX_RECENT = 10;
+const THREAD_NOTIFICATION_MODES: readonly ThreadNotificationPreference[] = ["off", "background", "always"];
+const TIME_FORMATS: readonly TimeFormatPreference[] = ["system", "12h", "24h"];
+const MIN_SETTLE_DAYS = 1;
+const MAX_SETTLE_DAYS = 365;
+const MAX_SETTLED = 200;
 
 export const DEFAULT_PREFERENCES: Preferences = {
   omoAutoUpdate: true,
@@ -13,6 +18,13 @@ export const DEFAULT_PREFERENCES: Preferences = {
   lastWorkspace: null,
   recentWorkspaces: [],
   modelId: null,
+  threadNotifications: "background",
+  inAppNotifications: true,
+  timeFormat: "system",
+  autoSettle: true,
+  autoSettleDays: 3,
+  settledThreads: [],
+  unsettledThreads: [],
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -37,6 +49,22 @@ function recent(value: unknown, current: string[]): string[] {
   return unique.slice(0, MAX_RECENT);
 }
 
+/** Thread ids, deduplicated, newest last, at most MAX_SETTLED entries. */
+function threadIds(value: unknown, current: string[]): string[] {
+  if (!Array.isArray(value)) return current;
+  const unique: string[] = [];
+  for (const entry of value) {
+    if (typeof entry === "string" && entry !== "" && !unique.includes(entry)) unique.push(entry);
+  }
+  return unique.slice(-MAX_SETTLED);
+}
+
+/** Whole days clamped into 1..365; anything that is not a finite number keeps the current value. */
+function settleDays(value: unknown, current: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return current;
+  return Math.min(MAX_SETTLE_DAYS, Math.max(MIN_SETTLE_DAYS, Math.round(value)));
+}
+
 /** Applies every valid field of patch to current; invalid or unknown values keep the current value. */
 function merge(current: Preferences, patch: unknown): Preferences {
   if (!isRecord(patch)) return current;
@@ -48,6 +76,15 @@ function merge(current: Preferences, patch: unknown): Preferences {
     lastWorkspace: has("lastWorkspace") ? nullableString(patch["lastWorkspace"], current.lastWorkspace) : current.lastWorkspace,
     recentWorkspaces: has("recentWorkspaces") ? recent(patch["recentWorkspaces"], current.recentWorkspaces) : current.recentWorkspaces,
     modelId: has("modelId") ? nullableString(patch["modelId"], current.modelId) : current.modelId,
+    threadNotifications: has("threadNotifications")
+      ? pick(THREAD_NOTIFICATION_MODES, patch["threadNotifications"], current.threadNotifications)
+      : current.threadNotifications,
+    inAppNotifications: typeof patch["inAppNotifications"] === "boolean" ? patch["inAppNotifications"] : current.inAppNotifications,
+    timeFormat: has("timeFormat") ? pick(TIME_FORMATS, patch["timeFormat"], current.timeFormat) : current.timeFormat,
+    autoSettle: typeof patch["autoSettle"] === "boolean" ? patch["autoSettle"] : current.autoSettle,
+    autoSettleDays: has("autoSettleDays") ? settleDays(patch["autoSettleDays"], current.autoSettleDays) : current.autoSettleDays,
+    settledThreads: has("settledThreads") ? threadIds(patch["settledThreads"], current.settledThreads) : current.settledThreads,
+    unsettledThreads: has("unsettledThreads") ? threadIds(patch["unsettledThreads"], current.unsettledThreads) : current.unsettledThreads,
     ...(has("modelProfile") ? { modelProfile: patch["modelProfile"] === null ? null :
       (["daily-normal", "daily-heavy", "geeky-normal", "geeky-heavy"] as const).find(value => value === patch["modelProfile"]) ?? current.modelProfile ?? null }
       : current.modelProfile === undefined ? {} : { modelProfile: current.modelProfile }),

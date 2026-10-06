@@ -9,6 +9,7 @@ import { Composer } from "./ui/composer/Composer";
 import { ConversationPane } from "./ui/conversation/ConversationPane";
 import { useNewSessionFlow } from "./ui/new-session";
 import { NoticeToasts } from "./ui/notices/NoticeToasts";
+import { ThreadNotifications } from "./ui/notices/ThreadNotifications";
 import { ConnectionBanner } from "./ui/onboarding/ConnectionBanner";
 import { Onboarding } from "./ui/onboarding/Onboarding";
 import { SettingsDialog } from "./ui/settings/SettingsDialog";
@@ -80,6 +81,7 @@ function Shell() {
         rightPanelWidth={SIDE_PANEL_WIDTH}
       />
       <SettingsDialog />
+      <ThreadNotifications />
       <NoticeToasts />
     </>
   );
