@@ -41,6 +41,15 @@ describe("PreferencesStore", () => {
     expect(next).toEqual({ ...DEFAULT_PREFERENCES, theme: "dark", modelId: "gpt" });
   });
 
+  it("accepts known color themes and keeps the current one for anything else", () => {
+    const store = new PreferencesStore(dir);
+    expect(store.set({ colorTheme: "classic" }).colorTheme).toBe("classic");
+    expect(store.set({ colorTheme: "violet" }).colorTheme).toBe("classic");
+    expect(store.set({ colorTheme: null }).colorTheme).toBe("classic");
+    expect(new PreferencesStore(dir).get().colorTheme).toBe("classic");
+    expect(store.set({ colorTheme: "omo" }).colorTheme).toBe("omo");
+  });
+
   it("validates and persists profiles without requiring them in old preferences", async () => {
     await writeFile(path.join(dir, "preferences.json"), JSON.stringify({ modelId: "old-model" }));
     const store = new PreferencesStore(dir);
