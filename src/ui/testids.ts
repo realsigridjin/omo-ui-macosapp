@@ -54,6 +54,8 @@ export const TESTID = {
   skillBodyToggle: "skill-body-toggle",
   omoContextToggle: "omo-context-toggle",
   omoContext: "omo-context",
+  memoryWrite: "memory-write",
+  sessionNotice: "session-notice",
   assistantMessage: "assistant-message",
   reasoning: "reasoning",
   toolCard: "tool-card",

@@ -13,6 +13,7 @@ export function emptyConversation(threadId: string): Conversation {
     resumed: false,
     pendingUserMessages: [],
     live: emptyLiveState(),
+    annotations: { notices: [], memoryWrites: {} },
   };
 }
 

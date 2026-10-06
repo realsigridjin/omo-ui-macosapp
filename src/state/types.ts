@@ -1,4 +1,4 @@
-import type { BridgeStatus, HistoricalTask, HistoryResult, HistoryTurn, TaskWork } from "../../shared/ipc";
+import type { BridgeStatus, HistoricalTask, HistoryResult, HistoryTurn, MemoryWriteNotice, SessionNotice, TaskWork } from "../../shared/ipc";
 import type { DagActivity, DagHeartbeat, DagRun, LiveTask, TodoPhase, WireGoal } from "../../shared/protocol";
 import type {
   CommandApprovalParams,
@@ -75,6 +75,13 @@ export interface Conversation {
   /** The model omo reported in this thread's latest thread/start or thread/resume result. */
   session?: SessionModel;
   live: ThreadLiveState;
+  /** Memory writes and omo's special messages read from the session file; refreshed after each completed turn. */
+  annotations: SessionAnnotations;
+}
+
+export interface SessionAnnotations {
+  notices: SessionNotice[];
+  memoryWrites: Record<string, MemoryWriteNotice>;
 }
 
 export interface ThreadLiveState {
@@ -201,7 +208,8 @@ export type AppEvent =
   | { type: "thread/opened"; thread: Thread; resumed: boolean; session?: SessionModel }
   | { type: "thread/activated"; threadId: string | null }
   | { type: "history/loading"; threadId: string }
-  | { type: "history/loaded"; threadId: string; turns: HistoryTurn[]; todo?: HistoryResult["todo"]; tasks?: HistoricalTask[] }
+  | { type: "history/loaded"; threadId: string; turns: HistoryTurn[]; todo?: HistoryResult["todo"]; tasks?: HistoricalTask[]; notices?: SessionNotice[]; memoryWrites?: Record<string, MemoryWriteNotice> }
+  | { type: "history/annotated"; threadId: string; notices: SessionNotice[]; memoryWrites: Record<string, MemoryWriteNotice> }
   | { type: "goal/loaded"; threadId: string; goal: WireGoal | null; generation: number; revision: number }
   | { type: "todo/loaded"; threadId: string; todo: HistoryResult["todo"]; generation: number; revision: number }
   | { type: "history/failed"; threadId: string; message: string }

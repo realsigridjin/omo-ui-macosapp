@@ -165,9 +165,16 @@ export function reduce(state: AppState, event: AppEvent): AppState {
         historyState: "loading",
         historyError: null,
       }));
+    case "history/annotated":
+      return updateExistingConversation(state, event.threadId, (conversation) => ({
+        ...conversation,
+        annotations: { notices: event.notices, memoryWrites: event.memoryWrites },
+      }));
     case "history/loaded":
       return updateExistingConversation(state, event.threadId, (conversation) => ({
         ...mergeHistory(conversation, event.turns),
+        annotations: event.notices === undefined && event.memoryWrites === undefined ? conversation.annotations
+          : { notices: event.notices ?? [], memoryWrites: event.memoryWrites ?? {} },
         live: { ...conversation.live,
           historicalTasks: event.tasks ?? conversation.live.historicalTasks,
           todo: conversation.live.todo?.source === "live" || event.todo === undefined ? conversation.live.todo :

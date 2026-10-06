@@ -1,0 +1,105 @@
+.memory {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 14%, transparent);
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.memoryTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dsw-alias-state-business-primary);
+  font-weight: 600;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.memoryLine {
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+}
+
+.memoryTimeline {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.notice {
+  margin: 2px 0;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.noticeHead {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.noticeHead:hover .noticeSummary {
+  color: var(--dsw-alias-label-primary);
+}
+
+.chevron {
+  flex: none;
+  transition: transform 120ms ease;
+}
+
+.chevron[data-open] {
+  transform: rotate(90deg);
+}
+
+.noticeLabel {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+  font-weight: 500;
+}
+
+.notice[data-display] .noticeLabel {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.noticeSummary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noticeBody {
+  margin: 4px 0 6px 14px;
+  padding: 8px 10px;
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+  line-height: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

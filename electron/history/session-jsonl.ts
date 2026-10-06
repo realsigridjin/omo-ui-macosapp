@@ -1,4 +1,4 @@
-import type { HistoricalTask, HistoryResult, HistoryTurn } from "../../shared/ipc";
+import type { HistoricalTask, HistoryResult, HistoryTurn, MemoryWriteNotice, SessionNotice } from "../../shared/ipc";
 import { parseTodo } from "../../src/state/live-wire";
 import type { DynamicToolCallContentItem, DynamicToolCallItem, ThreadItem, TurnError, UserInput } from "../../shared/protocol";
 
@@ -154,6 +154,40 @@ function completeTool(turn: TurnBuilder, message: JsonObject): void {
   if (isRecord(details) && typeof details["durationMs"] === "number") call.durationMs = details["durationMs"];
 }
 
+const NOTICE_TEXT_LIMIT = 8_000;
+
+function num(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** Reads `details.writeNotice` of a memory tool result; null when it is missing or malformed. */
+export function memoryWriteNotice(details: unknown): MemoryWriteNotice | null {
+  const notice = isRecord(details) ? details["writeNotice"] : undefined;
+  if (!isRecord(notice) || typeof notice["sha"] !== "string") return null;
+  const affected = Array.isArray(notice["affected"])
+    ? notice["affected"].filter(isRecord).flatMap((entry) => typeof entry["path"] === "string"
+      ? [{ path: entry["path"], insertions: num(entry["insertions"]) ?? 0, deletions: num(entry["deletions"]) ?? 0 }] : [])
+    : [];
+  const size = notice["size"];
+  const timeline = isRecord(notice["timeline"]) ? notice["timeline"] : {};
+  const sized = isRecord(size) && num(size["systemBytes"]) !== null && num(size["totalBytes"]) !== null && num(size["fileCount"]) !== null;
+  const iso = (value: unknown): string | null => (typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : null);
+  return {
+    sha: notice["sha"],
+    subject: typeof notice["subject"] === "string" ? notice["subject"] : "",
+    affected,
+    size: sized ? { systemBytes: size["systemBytes"] as number, totalBytes: size["totalBytes"] as number, fileCount: size["fileCount"] as number } : null,
+    entriesToday: num(timeline["entriesToday"]),
+    previousEntryAt: iso(timeline["previousEntryAtISO"]),
+    lastConsolidationAt: iso(timeline["lastConsolidationAtISO"]),
+  };
+}
+
+function noticeText(content: unknown): string {
+  const text = blocks(content).flatMap((block) => (block["type"] === "text" && typeof block["text"] === "string" ? [block["text"]] : [])).join("\n");
+  return text.length > NOTICE_TEXT_LIMIT ? `${text.slice(0, NOTICE_TEXT_LIMIT)}…` : text;
+}
+
 function finishTurn(turn: TurnBuilder, isFinal: boolean): HistoryTurn {
   const last = turn.items.at(-1);
   const status =
@@ -195,7 +229,29 @@ export function parseSessionJsonl(text: string): HistoryResult {
   const completions = new Map<string, HistoricalTask>();
   const taskOrder = new Set<string>();
   let turn: TurnBuilder | null = null;
+  const memoryWrites: Record<string, MemoryWriteNotice> = {};
+  const notices: SessionNotice[] = [];
+  // Notices before the first turn wait for it and sit at its top.
+  const leading: SessionNotice[] = [];
   for (const entry of activeBranch(entries, leafId)) {
+    if (entry.type === "custom_message" && typeof entry.raw["customType"] === "string") {
+      const notice: SessionNotice = {
+        id: entry.id,
+        customType: entry.raw["customType"],
+        display: entry.raw["display"] === true,
+        text: noticeText(entry.raw["content"]),
+        timestamp: entry.timestamp,
+        turnIndex: builders.length - 1,
+        afterItems: turn?.items.length ?? 0,
+      };
+      if (turn === null) leading.push(notice);
+      else notices.push(notice);
+    }
+    if (entry.type === "message" && isRecord(entry.raw["message"]) && entry.raw["message"]["role"] === "toolResult"
+      && entry.raw["message"]["toolName"] === "memory" && typeof entry.raw["message"]["toolCallId"] === "string") {
+      const write = memoryWriteNotice(entry.raw["message"]["details"]);
+      if (write !== null) memoryWrites[entry.raw["message"]["toolCallId"]] = write;
+    }
     if (entry.type === "custom" && entry.raw["customType"] === "senpi.todo-state") {
       const parsed = parseTodo(entry.raw["data"]);
       if (parsed !== null) todo = parsed;
@@ -247,7 +303,10 @@ export function parseSessionJsonl(text: string): HistoryResult {
     }
     if (turn !== null && entry.timestamp !== null) turn.lastTimestamp = entry.timestamp;
   }
+  notices.unshift(...leading.map((notice) => ({ ...notice, turnIndex: 0, afterItems: 0 })));
   return { turns: builders.map((builder, index) => finishTurn(builder, index === builders.length - 1)), todo,
+    ...(Object.keys(memoryWrites).length === 0 ? {} : { memoryWrites }),
+    ...(notices.length === 0 ? {} : { notices }),
     tasks: [...taskOrder].flatMap((id) => {
       const receipt = tasks.get(id);
       const completion = completions.get(id);

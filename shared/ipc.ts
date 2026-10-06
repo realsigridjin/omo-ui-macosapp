@@ -163,10 +163,40 @@ export interface HistoricalTask {
   error_message_truncated?: boolean;
 }
 
+/** What omo recorded about one memory write on its memory tool result (`details.writeNotice`). */
+export interface MemoryWriteNotice {
+  sha: string;
+  subject: string;
+  affected: Array<{ path: string; insertions: number; deletions: number }>;
+  /** Bytes injected into every system prompt, all memory bytes, and memory files. */
+  size: { systemBytes: number; totalBytes: number; fileCount: number } | null;
+  entriesToday: number | null;
+  previousEntryAt: string | null;
+  lastConsolidationAt: string | null;
+}
+
+/**
+ * A session `custom_message` entry: context omo injected or showed outside the conversation items (memory notices,
+ * recalled memories, monitor and task wake-ups, model profile changes). `turnIndex` and `afterItems` place it among
+ * the parsed turns: after `afterItems` items of turn `turnIndex`. `display` is omo's own flag for user-facing ones.
+ */
+export interface SessionNotice {
+  id: string;
+  customType: string;
+  display: boolean;
+  text: string;
+  timestamp: number | null;
+  turnIndex: number;
+  afterItems: number;
+}
+
 export interface HistoryResult {
   turns: HistoryTurn[];
   todo: { phases: TodoPhase[] } | null;
   tasks: HistoricalTask[];
+  /** Memory writes keyed by the memory tool call id. */
+  memoryWrites?: Record<string, MemoryWriteNotice>;
+  notices?: SessionNotice[];
 }
 
 /** Read-only child work from native task records and each child's active session branch. */

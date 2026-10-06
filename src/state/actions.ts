@@ -211,6 +211,21 @@ export function createActions(store: AppStore, bridge: OmoBridgeApi, options: Ac
     }
   };
 
+  // Memory writes and omo's special messages exist only in the session file. Reading it is costly for long sessions,
+  // so only a turn that called the memory tool re-reads it; opening a thread reads everything anyway.
+  const refreshAnnotations = async (threadId: string): Promise<void> => {
+    const state = store.getState();
+    const path = state.threads[threadId]?.path ?? null;
+    if (path === null || state.conversations[threadId] === undefined) return;
+    try {
+      const history = await bridge.loadHistory(path);
+      store.dispatch({ type: "history/annotated", threadId, notices: history.notices ?? [], memoryWrites: history.memoryWrites ?? {} });
+    } catch (error) {
+      // The transcript stays usable without annotations; the next completed turn retries.
+      console.warn("Could not refresh session annotations", error);
+    }
+  };
+
   const loadMcpServers = async (): Promise<void> => {
     const request = ++mcpRead;
     const threadId = store.getState().activeThreadId;
@@ -458,7 +473,12 @@ export function createActions(store: AppStore, bridge: OmoBridgeApi, options: Ac
           store.dispatch({ type: "rpc/notification", notification, receivedAtMs: now() });
           const parsed = parseNotification(notification);
           if (parsed?.method === "mcpServer/startupStatus/updated" && mcpSectionOpen) void loadMcpServers();
-          if (parsed?.method === "turn/completed") void readGoal(parsed.params.threadId);
+          if (parsed?.method === "turn/completed") {
+            void readGoal(parsed.params.threadId);
+            if (parsed.params.turn.items.some((item) => item.type === "dynamicToolCall" && item.tool === "memory")) {
+              void refreshAnnotations(parsed.params.threadId);
+            }
+          }
           if (parsed?.method === "item/completed" && parsed.params.item.type === "dynamicToolCall") {
             const item = parsed.params.item;
             if (item.tool === "todo" || (item.tool === "eval" && evalIncludesTodo(item.arguments, item.contentItems))) {

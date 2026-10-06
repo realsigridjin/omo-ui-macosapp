@@ -1,4 +1,5 @@
-import { memo, useMemo, useState, type ReactNode } from "react";
+import { Fragment, memo, useMemo, useState, type ReactNode } from "react";
+import type { MemoryWriteNotice, SessionNotice } from "../../../shared/ipc";
 import {
   IconContextInjectionOutlineRegular,
   IconPlanOutlineRegular,
@@ -10,6 +11,7 @@ import { useT } from "../../i18n";
 import type { ConversationItem, ConversationTurn } from "../../state";
 import { TESTID } from "../testids";
 import { AssistantMessage } from "./AssistantMessage";
+import { MemoryWriteCard, NoticeRow } from "./SessionNotices";
 import { EditMessageButton, EditMessageForm, RegenerateButton, userRowClass, type BranchAt } from "./BranchControls";
 import { elapsedMs } from "./format";
 import { useConversationLabels } from "./labels";
@@ -18,6 +20,9 @@ import { RenderBoundary } from "./RenderBoundary";
 import { ToolCard } from "./ToolCard";
 import { UserBubble, userMessageParts } from "./UserBubble";
 import css from "./TurnView.module.css";
+
+const NO_NOTICES: readonly SessionNotice[] = [];
+const NO_WRITES: Readonly<Record<string, MemoryWriteNotice>> = {};
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled conversation item: ${JSON.stringify(value)}`);
@@ -135,11 +140,16 @@ export const TurnView = memo(function TurnView({
   cwd,
   branch = null,
   last = false,
+  notices = NO_NOTICES,
+  memoryWrites = NO_WRITES,
 }: {
   turn: ConversationTurn;
   cwd: string | null;
   branch?: BranchContext | null;
   last?: boolean;
+  /** omo's special messages recorded in this turn, placed after `afterItems` items. */
+  notices?: readonly SessionNotice[];
+  memoryWrites?: Readonly<Record<string, MemoryWriteNotice>>;
 }) {
   const t = useT();
   const failed = turn.error !== null || turn.status === "failed";
@@ -147,9 +157,17 @@ export const TurnView = memo(function TurnView({
   const turnBranch = useMemo<TurnBranch | null>(() => (branch === null ? null : { ...branch, turnId: turn.id }), [branch, turn.id]);
   return (
     <div className={css.turn} data-testid={TESTID.turn} data-turn-id={turn.id} data-status={turn.status}>
-      {turn.items.map((entry) => (
-        <ItemView key={entry.item.id} entry={entry} cwd={cwd} branch={turnBranch} />
-      ))}
+      {turn.items.map((entry, index) => {
+        const write = entry.item.type === "dynamicToolCall" && entry.item.tool === "memory" ? memoryWrites[entry.item.id] : undefined;
+        return (
+          <Fragment key={entry.item.id}>
+            {notices.filter((notice) => notice.afterItems === index).map((notice) => <NoticeRow key={notice.id} notice={notice} />)}
+            <ItemView entry={entry} cwd={cwd} branch={turnBranch} />
+            {write !== undefined && <MemoryWriteCard write={write} />}
+          </Fragment>
+        );
+      })}
+      {notices.filter((notice) => notice.afterItems >= turn.items.length).map((notice) => <NoticeRow key={notice.id} notice={notice} />)}
       {failed && <TurnErrorRow error={turn.error} retrying={turn.status === "inProgress"} />}
       {turn.status === "interrupted" && <span className={css.stopped}>{t("conversation.turn.stopped")}</span>}
       {turnBranch !== null && last && turn.status !== "inProgress" && prompt?.type === "userMessage" && (

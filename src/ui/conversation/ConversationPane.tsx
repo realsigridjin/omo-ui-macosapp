@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import type { SessionNotice } from "../../../shared/ipc";
 import clsx from "clsx";
 import {
   Button,
@@ -120,6 +121,12 @@ function Transcript({ threadId, cwd, turnActive }: { threadId: string; cwd: stri
   const pending = useAppSelector((state) => selectPendingRequestsForThread(state, threadId));
   const scroll = useStickToBottom();
   const turns = conversation?.turns ?? NO_TURNS;
+  const annotations = conversation?.annotations;
+  const noticesByTurn = useMemo(() => {
+    const byTurn = new Map<number, SessionNotice[]>();
+    for (const notice of annotations?.notices ?? []) byTurn.set(notice.turnIndex, [...(byTurn.get(notice.turnIndex) ?? []), notice]);
+    return byTurn;
+  }, [annotations?.notices]);
   const activeTurnId = conversation?.activeTurnId ?? null;
   const activeTurn = useMemo(
     () => (activeTurnId === null ? null : (turns.find((turn) => turn.id === activeTurnId) ?? null)),
@@ -159,7 +166,8 @@ function Transcript({ threadId, cwd, turnActive }: { threadId: string; cwd: stri
           {historyState === "error" && <HistoryError threadId={threadId} message={conversation?.historyError ?? null} />}
           <MarkdownDelegateProvider openExternalLink={openExternalLink} openFile={openFile}>
             {turns.map((turn, index) => (
-              <TurnView key={turn.id} turn={turn} cwd={cwd} branch={branch} last={index === turns.length - 1} />
+              <TurnView key={turn.id} turn={turn} cwd={cwd} branch={branch} last={index === turns.length - 1}
+                notices={noticesByTurn.get(index)} memoryWrites={annotations?.memoryWrites} />
             ))}
           </MarkdownDelegateProvider>
           {conversation?.pendingUserMessages.map((message) => (
