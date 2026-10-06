@@ -85,6 +85,8 @@ export interface Preferences {
   /** Model id chosen in the composer, or null for the omo default. */
   modelId: string | null;
   modelProfile?: ModelProfile | null;
+  /** True once the first-run wizard finished or was dismissed; older preferences without the field infer it from workspace use. */
+  onboardingCompleted: boolean;
 }
 
 /** One turn reconstructed from a session JSONL file. */

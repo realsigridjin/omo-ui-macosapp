@@ -7,6 +7,8 @@ export const SIDEBAR_DEFAULT_WIDTH = 280;
 
 export interface UiState {
   settingsOpen: boolean;
+  /** First-run wizard visibility; opens on launch until the onboardingCompleted preference is true. */
+  onboardingOpen: boolean;
   sidebarVisible: boolean;
   sidebarWidth: number;
   /** Last preferences read from or written through the bridge; null until the first load. */
@@ -15,6 +17,7 @@ export interface UiState {
 
 let state: UiState = {
   settingsOpen: false,
+  onboardingOpen: false,
   sidebarVisible: true,
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
   preferences: null,
@@ -41,6 +44,7 @@ export const uiState = {
   get: (): UiState => state,
   subscribe,
   setSettingsOpen: (settingsOpen: boolean): void => update({ settingsOpen }),
+  setOnboardingOpen: (onboardingOpen: boolean): void => update({ onboardingOpen }),
   setSidebarVisible: (sidebarVisible: boolean): void => update({ sidebarVisible }),
   toggleSidebar: (): void => update({ sidebarVisible: !state.sidebarVisible }),
   setSidebarWidth: (width: number): void => update({ sidebarWidth: clampSidebarWidth(width) }),

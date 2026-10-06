@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,6 +22,8 @@ export interface LaunchOptions {
   extraEnv?: Record<string, string>;
   /** Wait for the bridge to report "connected" before returning; defaults to true. */
   waitForConnected?: boolean;
+  /** Leave the first-run wizard enabled; by default a fresh userData is seeded so the wizard stays hidden. */
+  onboarding?: boolean;
 }
 
 export interface LaunchDirs {
@@ -42,6 +44,18 @@ export interface LaunchedApp {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** Seeds onboardingCompleted into a fresh userData so existing specs never meet the wizard; an existing file wins. */
+function seedSkipOnboarding(userData: string): void {
+  const file = path.join(userData, "preferences.json");
+  try {
+    readFileSync(file);
+  } catch (error) {
+    if (!isRecord(error) || error["code"] !== "ENOENT") throw error;
+    mkdirSync(userData, { recursive: true });
+    writeFileSync(file, `${JSON.stringify({ onboardingCompleted: true })}\n`);
+  }
+}
 
 export function tempDir(label: string): string {
   return mkdtempSync(path.join(tmpdir(), `omo-ui-e2e-${label}-`));
@@ -82,6 +96,7 @@ export async function launchApp(options: LaunchOptions): Promise<LaunchedApp> {
 
   const userData = options.userData ?? own("user-data");
   env[ENV.userData] = userData;
+  if (options.onboarding !== true) seedSkipOnboarding(userData);
   const pickDir = options.pickDir ?? null;
   if (pickDir !== null) env[ENV.qaPickDir] = pickDir;
 

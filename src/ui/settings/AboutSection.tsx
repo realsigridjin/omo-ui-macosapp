@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { IconRightUpOutlineRegular } from "@deepseek-ai/dsh-client-ui-primitives";
+import { Button, IconRightUpOutlineRegular } from "@deepseek-ai/dsh-client-ui-primitives";
 import { useT } from "../../i18n";
+import { TESTID } from "../testids";
+import { uiState } from "../ui-state";
 import { errorMessage, useDiagnostics } from "./diagnostics";
 import { SectionHeading } from "./SectionHeading";
 import css from "./SettingsDialog.module.css";
@@ -32,6 +34,14 @@ export function AboutSection() {
             <dt>{t("shell.settings.about.electronVersion")}</dt>
             <dd className={versions === null ? undefined : css.mono}>{versions?.electronVersion ?? pending}</dd>
           </dl>
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid={TESTID.settingsShowOnboarding}
+            onClick={() => uiState.setOnboardingOpen(true)}
+          >
+            {t("shell.settings.about.showOnboarding")}
+          </Button>
         </div>
       </div>
       <div className={css.card}>
