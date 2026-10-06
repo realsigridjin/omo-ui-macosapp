@@ -26,17 +26,22 @@ function SidebarToggle() {
   );
 }
 
-/** Window-drag header strip: the breadcrumb (workspace badge, workspace, thread title), the activity chip, the running state and the Open split button. */
+/**
+ * Window-drag header strip: the breadcrumb (workspace badge, workspace, thread title), the activity chip, the running
+ * state, the Open split button and, at the far right, the panel toggles.
+ */
 export const ConversationHeader = memo(function ConversationHeader({
   active,
   thread,
   running,
   activity,
+  panels,
 }: {
   active: boolean;
   thread: ThreadSummary | null;
   running: boolean;
   activity?: ReactNode;
+  panels?: ReactNode;
 }) {
   const t = useT();
   const { sidebarVisible } = useUiState();
@@ -78,6 +83,7 @@ export const ConversationHeader = memo(function ConversationHeader({
           </span>
         )}
         {cwd !== "" && <OpenButton cwd={cwd} />}
+        {panels}
       </div>
     </header>
   );

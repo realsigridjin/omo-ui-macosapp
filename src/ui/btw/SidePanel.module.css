@@ -455,13 +455,20 @@
   align-items: center;
   gap: 6px;
   height: 28px;
-  padding: 0 10px;
+  min-width: 28px;
+  padding: 0 6px;
+  justify-content: center;
   border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: 8px;
   background: transparent;
   color: var(--dsw-alias-label-secondary);
   font: 500 13px/1 var(--dsw-font-family);
   cursor: pointer;
+}
+
+/* The left-panel glyph mirrored reads as the right panel the side chat opens. */
+.toggleIcon {
+  transform: scaleX(-1);
 }
 
 .toggle:hover {
