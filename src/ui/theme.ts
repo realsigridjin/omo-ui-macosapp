@@ -51,6 +51,9 @@ export function applyColorTheme(theme: ColorTheme): void {
 export function revealThemePreference(pref: ThemePreference, control: HTMLElement, persist: () => void): void {
   const dark = pref === "dark" || (pref === "system" && window.matchMedia(DARK_QUERY).matches);
   if (dark === document.body.hasAttribute(DARK_ATTRIBUTE)) {
+    // No visible change, but this is still the latest choice: a pending reveal must not apply after it.
+    activeTransition?.skipTransition();
+    latestChoice++;
     applyThemePreference(pref);
     persist();
     return;
