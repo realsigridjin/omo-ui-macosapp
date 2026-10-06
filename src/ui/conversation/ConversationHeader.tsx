@@ -7,6 +7,7 @@ import { TESTID } from "../testids";
 import { uiState, useUiState } from "../ui-state";
 import { threadTitle, workspaceName } from "./format";
 import { OpenButton } from "./OpenButton";
+import { CommitPushButton } from "./CommitPushButton";
 import css from "./ConversationHeader.module.css";
 
 function SidebarToggle() {
@@ -77,6 +78,7 @@ export const ConversationHeader = memo(function ConversationHeader({
             <TextShimmer active>{t("conversation.header.running")}</TextShimmer>
           </span>
         )}
+        {cwd !== "" && <CommitPushButton cwd={cwd} />}
         {cwd !== "" && <OpenButton cwd={cwd} />}
       </div>
     </header>

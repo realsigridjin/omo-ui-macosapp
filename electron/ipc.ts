@@ -5,7 +5,8 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { app, clipboard, dialog, ipcMain, shell } from "electron";
 import type { BrowserWindow, OpenDialogOptions } from "electron";
-import { ENV, IPC } from "../shared/ipc";
+import { ENV, IPC, PERMISSION_PRESETS } from "../shared/ipc";
+import type { PermissionPreset } from "../shared/ipc";
 import type { BranchResult, Diagnostics, HistoryResult, InstallResult, RequestEnvelope } from "../shared/ipc";
 import { CLIENT_METHODS } from "../shared/protocol";
 import type { ClientMethod, ClientParams, RequestId } from "../shared/protocol";
@@ -16,7 +17,11 @@ import { parseSessionJsonl } from "./history/session-jsonl";
 import { loadTaskWork } from "./history/task-work";
 import { RpcRequestError } from "./omo/app-server-client";
 import { runInstaller } from "./omo/installer";
+import { createGit } from "./git-info";
+import type { Git } from "./git-info";
 import { createOpenWorkspace } from "./open-workspace";
+import { createWorkspaceSettings } from "./workspace-settings";
+import type { WorkspaceSettings } from "./workspace-settings";
 import type { OpenWorkspace } from "./open-workspace";
 import type { OmoSupervisor } from "./omo/supervisor";
 import type { PreferencesStore } from "./prefs";
@@ -31,6 +36,10 @@ export interface IpcDeps {
   homeDir: string;
   /** Defaults to the real mdfind/open spawner and shell.openPath; tests inject fakes. */
   openWorkspace?: OpenWorkspace;
+  /** Defaults to git through execFile with a 3 s timeout; tests inject fakes. */
+  git?: Git;
+  /** Project-settings reader/writer; tests inject fakes. */
+  workspaceSettings?: WorkspaceSettings;
 }
 
 const execFileAsync = promisify(execFile);
@@ -39,6 +48,13 @@ const defaultOpenWorkspace = (): OpenWorkspace =>
   createOpenWorkspace({
     exec: async (file, args) => (await execFileAsync(file, [...args])).stdout,
     openPath: (target) => shell.openPath(target),
+  });
+
+const GIT_TIMEOUT_MS = 3_000;
+
+const defaultGit = (): Git =>
+  createGit({
+    exec: async (file, args) => (await execFileAsync(file, [...args], { timeout: GIT_TIMEOUT_MS })).stdout,
   });
 
 const INTERNAL_ERROR = -32603;
@@ -67,6 +83,8 @@ function isInside(root: string, target: string): boolean {
 export function registerIpc(deps: IpcDeps): () => void {
   const { supervisor, prefs, getWindow, homeDir } = deps;
   const openWorkspace = deps.openWorkspace ?? defaultOpenWorkspace();
+  const git = deps.git ?? defaultGit();
+  const workspaceSettings = deps.workspaceSettings ?? createWorkspaceSettings();
   const send = (channel: string, payload: unknown): void => {
     const window = getWindow();
     if (window && !window.isDestroyed() && !window.webContents.isDestroyed()) window.webContents.send(channel, payload);
@@ -197,6 +215,16 @@ export function registerIpc(deps: IpcDeps): () => void {
       if (target === null || target === undefined) return openWorkspace.openDefault(cwd);
       await openWorkspace.open(cwd, target);
       return target;
+    },
+    [IPC.gitInfo]: (_event, cwd) => git.info(requireString(cwd, "cwd")),
+    [IPC.gitStatus]: (_event, cwd) => git.status(requireString(cwd, "cwd")),
+    [IPC.gitCommitPush]: (_event, cwd, message, push) => git.commitAndPush(requireString(cwd, "cwd"), requireString(message, "message"), push === true),
+    [IPC.getPermissionPreset]: (_event, cwd) => workspaceSettings.getPermissionPreset(requireString(cwd, "cwd")),
+    [IPC.setPermissionPreset]: (_event, cwd, preset) => {
+      if (typeof preset !== "string" || !(PERMISSION_PRESETS as readonly string[]).includes(preset)) {
+        throw new TypeError(`unknown permission preset: ${String(preset)}`);
+      }
+      return workspaceSettings.setPermissionPreset(requireString(cwd, "cwd"), preset as PermissionPreset);
     },
   };
 

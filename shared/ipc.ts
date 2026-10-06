@@ -146,6 +146,33 @@ export type MenuCommand = "new-session" | "settings" | "toggle-sidebar";
 export const OPEN_TARGET_IDS = ["vscode", "cursor", "terminal", "finder"] as const;
 export type OpenTargetId = (typeof OPEN_TARGET_IDS)[number];
 
+/** Git facts of one directory; null when the directory is not inside a git work tree. */
+export interface GitInfo {
+  /** Branch name, or the short sha of a detached HEAD. */
+  branch: string;
+  /** Absolute path of the work-tree root from `git rev-parse --show-toplevel`. */
+  root: string;
+  /** Commits on HEAD missing from the upstream; null when the branch has no upstream. */
+  ahead: number | null;
+  /** Commits on the upstream missing from HEAD; null when the branch has no upstream. */
+  behind: number | null;
+}
+
+/** Outcome of `git add -A` + commit (+ optional push); git failures reject before this resolves. */
+export interface GitCommitResult {
+  /** False when git reported nothing to commit. */
+  committed: boolean;
+  pushed: boolean;
+  /** "no-upstream" when a requested push was skipped because the branch has no upstream. */
+  pushSkipped: "no-upstream" | null;
+  /** Short sha of the created commit, when one was created. */
+  commitHash: string | null;
+}
+
+/** Permission presets the composer's picker offers; the values are omo `permissionPreset` settings keys. */
+export const PERMISSION_PRESETS = ["full-access", "workspace", "ask"] as const;
+export type PermissionPreset = (typeof PERMISSION_PRESETS)[number];
+
 export interface OpenTarget {
   id: OpenTargetId;
 }
@@ -242,6 +269,16 @@ export interface OmoBridgeApi {
   listOpenTargets(): Promise<OpenTarget[]>;
   /** Opens `cwd` (an absolute, existing directory) in `target`; with no target, the first installed editor, else Finder. Resolves the target used. */
   openWorkspace(cwd: string, target?: OpenTargetId | null): Promise<OpenTargetId>;
+  /** Branch, root, and upstream ahead/behind of `cwd`; null when it is not inside a git work tree. */
+  gitInfo(cwd: string): Promise<GitInfo | null>;
+  /** Verbatim `git status --porcelain` lines of `cwd`; empty when the work tree is clean. */
+  gitStatus(cwd: string): Promise<string[]>;
+  /** Stages all changes, commits `message`, and pushes when `push` is true; a push without an upstream is skipped and reported. */
+  gitCommitPush(cwd: string, message: string, push: boolean): Promise<GitCommitResult>;
+  /** The workspace's omo `permissionPreset`; "full-access" when unset. */
+  getPermissionPreset(cwd: string): Promise<PermissionPreset>;
+  /** Merges the preset into `<cwd>/.omo/settings.json` before the next turn; see docs/permissions.md. */
+  setPermissionPreset(cwd: string, preset: PermissionPreset): Promise<void>;
   readonly platform: string;
 }
 
@@ -275,6 +312,11 @@ export const IPC = {
   revealPath: "app:reveal-path",
   listOpenTargets: "app:list-open-targets",
   openWorkspace: "app:open-workspace",
+  gitInfo: "git:info",
+  gitStatus: "git:status",
+  gitCommitPush: "git:commit-push",
+  getPermissionPreset: "workspace:preset:get",
+  setPermissionPreset: "workspace:preset:set",
 } as const;
 
 /** Result envelope the main process returns from the `omo:request` invoke channel. */

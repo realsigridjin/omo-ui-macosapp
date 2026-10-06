@@ -63,6 +63,18 @@ export function TerminalGlyph({ size = 14, className }: IconProps) {
   );
 }
 
+/** Git branch: a vertical line forking into two commits. */
+export function BranchGlyph({ size = 14, className }: IconProps) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} className={className} aria-hidden>
+      <circle cx="4.5" cy="3.8" r="1.7" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="4.5" cy="12.2" r="1.7" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="11.5" cy="6" r="1.7" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M4.5 5.5v5M4.5 9.4c0-2.6 2-3.4 4.4-3.4" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /** Plus inside a circle, for the dashed New project button. */
 export function PlusCircleGlyph({ size = 16, className }: IconProps) {
   return (
