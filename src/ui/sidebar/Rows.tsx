@@ -16,6 +16,8 @@ import type { ThreadSummary, WorkspaceGroup } from "../../state";
 import { useLocale, useT } from "../../i18n";
 import { threadTitle } from "../conversation/format";
 import { GripGlyph } from "../glyphs";
+import { useAppSelector } from "../app-context";
+import { compactElapsed, useNowTick } from "../elapsed";
 import { TESTID } from "../testids";
 import { useUiState } from "../ui-state";
 import { isRunning } from "./thread-filter";
@@ -130,6 +132,23 @@ interface ThreadRowProps {
   onSettle?(threadId: string, settled: boolean): void;
 }
 
+/** "Working 12s" for a running thread; the seconds count from its active turn's start when this window saw it. */
+function RunningPill({ threadId }: { threadId: string }) {
+  const t = useT();
+  const startedAt = useAppSelector((state) => {
+    const conversation = state.conversations[threadId];
+    if (conversation === undefined || conversation.activeTurnId === null) return null;
+    return conversation.turns.find((turn) => turn.id === conversation.activeTurnId)?.startedAtMs ?? null;
+  });
+  const now = useNowTick(startedAt !== null);
+  return (
+    <span className={css.runningPill} data-testid={TESTID.threadRunning}>
+      <StateDot state="ongoing" size={10} />
+      <span>{startedAt === null ? t("shell.sidebar.working") : t("shell.sidebar.workingFor", { time: compactElapsed(now - startedAt) })}</span>
+    </span>
+  );
+}
+
 export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDelete, onReveal, settled = false, onSettle }: ThreadRowProps) {
   const t = useT();
   const locale = useLocale();
@@ -196,12 +215,7 @@ export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDe
       <button type="button" className={css.rowMain} onClick={() => onOpen(thread.id)}>
         <WorkspaceBadge cwd={thread.cwd} className={css.rowBadge} />
         <span className={css.title}>{title}</span>
-        {running && (
-          <span className={css.runningSlot}>
-            <StateDot state="ongoing" />
-            <span className={css.visuallyHidden}>{t("shell.sidebar.running")}</span>
-          </span>
-        )}
+        {running && <RunningPill threadId={thread.id} />}
         <span className={css.time}>{formatThreadTime(thread.updatedAt, nowMs, t, preferences?.timeFormat ?? "system", locale)}</span>
       </button>
       <span className={css.rowActions}>
