@@ -90,6 +90,7 @@ test("C001: pong, a tool call, and the sidebar workspace group", async () => {
   await expect(pongTurn.locator(`[data-testid="${TESTID.assistantMessage}"]`).last()).toHaveText(/^\s*pong\s*$/i);
 
   const toolTurn = await sendAndFinish(page, "Use your tools to run echo omo-ui-42 and reply with only its output.");
+  for (const fold of await toolTurn.locator(`[data-testid="${TESTID.workedFoldToggle}"]`).all()) await fold.click();
   await expect(toolTurn.locator(`[data-testid="${TESTID.toolCard}"]`).first()).toBeVisible();
   await expect(toolTurn.locator(`[data-testid="${TESTID.assistantMessage}"]`).last()).toContainText("omo-ui-42");
 
@@ -110,6 +111,7 @@ test("C003: relaunch restores the real thread history", async () => {
   await expect(row).toBeVisible();
   await row.getByRole("button").first().click();
   await expect(row).toHaveAttribute("aria-current", "page");
+  for (const fold of await page.locator(`[data-testid="${TESTID.workedFoldToggle}"]`).all()) await fold.click();
   await expect(byTestId(page, TESTID.toolCard).first()).toBeVisible();
   const answers = byTestId(page, TESTID.assistantMessage);
   await expect(answers.filter({ hasText: /pong/i }).first()).toBeVisible();

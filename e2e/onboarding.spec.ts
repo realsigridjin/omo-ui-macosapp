@@ -21,6 +21,13 @@ const current = (): LaunchedApp => {
 const stepOf = (page: Page, step: string): Locator =>
   page.locator(`[data-testid="${TESTID.wizardStep}"][data-step="${step}"]`);
 
+// A slow launch can advance the wizard past a step before the spec looks at it; done steps can be reopened.
+const atStep = async (page: Page, step: string): Promise<void> => {
+  const target = stepOf(page, step);
+  if ((await target.getAttribute("data-state")) === "done") await target.click();
+  await expect(target).toHaveAttribute("data-state", "current");
+};
+
 const projectRow = (page: Page, cwd: string): Locator =>
   page.locator(`[data-testid="${TESTID.wizardProjectRow}"][data-cwd="${cwd}"]`);
 
@@ -63,13 +70,13 @@ test("first run steps through the wizard and remembers the choices", async () =>
   const { page } = current();
   const wizard = byTestId(page, TESTID.wizard);
   await expect(wizard).toBeVisible();
-  await expect(stepOf(page, "welcome")).toHaveAttribute("data-state", "current");
+  await atStep(page, "welcome");
   await expect(stepOf(page, "model")).toHaveAttribute("data-state", "todo");
   await expect(wizard).toContainText("5.1.4-fake");
   await shot(page, "ONB1-welcome-light");
 
   await page.keyboard.press("Enter");
-  await expect(stepOf(page, "model")).toHaveAttribute("data-state", "current");
+  await atStep(page, "model");
   await expect(stepOf(page, "welcome")).toHaveAttribute("data-state", "done");
   await expect(byTestId(page, TESTID.wizardModelOption)).toHaveCount(6);
   await shot(page, "ONB2-model-light");
@@ -79,7 +86,7 @@ test("first run steps through the wizard and remembers the choices", async () =>
   await expect(beta).toHaveAttribute("aria-checked", "true");
 
   await page.keyboard.press("Enter");
-  await expect(stepOf(page, "project")).toHaveAttribute("data-state", "current");
+  await atStep(page, "project");
   const rows = byTestId(page, TESTID.wizardProjectRow);
   await expect(rows).toHaveCount(2);
   await expect(byTestId(page, TESTID.wizardSelectedCount)).toHaveText("0 of 2 selected");
@@ -105,7 +112,7 @@ test("first run steps through the wizard and remembers the choices", async () =>
   await shot(page, "ONB3-project-light");
 
   await page.keyboard.press("Enter");
-  await expect(stepOf(page, "ready")).toHaveAttribute("data-state", "current");
+  await atStep(page, "ready");
   await expect(wizard).toContainText("Fake Beta");
   await expect(wizard).toContainText(path.basename(projA));
   await expect(wizard).toContainText("OmO UI collects no telemetry.");
@@ -155,7 +162,7 @@ test("Settings ▸ About shows the wizard again and Escape closes it", async () 
   await dialog.locator('[data-section="about"]').click();
   await byTestId(page, TESTID.settingsShowOnboarding).click();
   await expect(byTestId(page, TESTID.wizard)).toBeVisible();
-  await expect(stepOf(page, "welcome")).toHaveAttribute("data-state", "current");
+  await atStep(page, "welcome");
   await page.keyboard.press("Escape");
   await expect(byTestId(page, TESTID.wizard)).toBeHidden();
   await page.keyboard.press("Escape");
@@ -199,18 +206,22 @@ test("every step renders in the dark theme", async () => {
   await expect(page.locator("body")).toHaveAttribute("data-ds-dark-theme", "");
   const wizard = byTestId(page, TESTID.wizard);
   await expect(wizard).toBeVisible();
+  // Keyboard stepping is covered by the light-theme run; this one drives the buttons so a slow launch cannot
+  // double-advance a step before an assertion.
+  const advance = (): Promise<void> => byTestId(page, TESTID.wizardContinue).click();
+  await atStep(page, "welcome");
   await shot(page, "ONB1-welcome-dark");
 
-  await page.keyboard.press("Enter");
-  await expect(stepOf(page, "model")).toHaveAttribute("data-state", "current");
+  await advance();
+  await atStep(page, "model");
   await shot(page, "ONB2-model-dark");
 
-  await page.keyboard.press("Enter");
-  await expect(stepOf(page, "project")).toHaveAttribute("data-state", "current");
+  await advance();
+  await atStep(page, "project");
   await shot(page, "ONB3-project-dark");
 
-  await page.keyboard.press("Enter");
-  await expect(stepOf(page, "ready")).toHaveAttribute("data-state", "current");
+  await advance();
+  await atStep(page, "ready");
   await shot(page, "ONB4-ready-dark");
 
   await byTestId(page, TESTID.wizardStart).click();

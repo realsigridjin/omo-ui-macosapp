@@ -56,6 +56,9 @@ test("a long conversation opens at its latest turn and stays there while an answ
 test("a new session opens promptly while an answer streams fast into a long conversation", async () => {
   const { page } = current();
   await openLongConversation(page);
+  // The Work Log fold hides restored tool cards from the DOM; reopen every turn's steps so the transcript keeps the
+  // node count this stress test needs.
+  for (const fold of await page.locator(`[data-testid="${TESTID.workedFoldToggle}"]`).all()) await fold.click();
   // The transcript must be large enough that a synchronous layout per streamed delta costs more than the 2 ms between
   // deltas; that per-delta layout is what delayed every other renderer task.
   expect(await page.evaluate(() => document.getElementsByTagName("*").length)).toBeGreaterThan(30_000);
