@@ -308,6 +308,23 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Restoring wipes this device's preferences, so its confirm button carries the destructive colour. */
+.destructive {
+  border-color: transparent;
+  background: var(--dsw-alias-state-error-primary);
+  color: #fff;
+}
+
+/* In a narrow window the question would collide with the breadcrumb; the buttons alone still read as a confirm. */
+@media (max-width: 760px) {
+  .restoreText {
+    display: none;
+  }
 }
 
 .restoreText {

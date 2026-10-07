@@ -551,7 +551,7 @@ describe("createActions", () => {
     expect(await context.actions.sendMessage("hello")).toBe(false);
     const state = context.store.getState();
     expect(state.conversations[THREAD_ID]?.pendingUserMessages).toEqual([]);
-    expect(state.notices).toMatchObject([{ level: "error", message: "-32000: turn/start failed", threadId: THREAD_ID }]);
+    expect(state.notices).toMatchObject([{ level: "error", message: "turn/start failed", threadId: THREAD_ID }]);
   });
 
   it("answers a user-input request with the wire answer map", async () => {
@@ -660,7 +660,7 @@ describe("skill catalog actions", () => {
     context.bridge.failing.add("skills/list");
     await context.actions.loadSkills(cwd);
     expect(selectSkillCatalog(context.store.getState(), cwd)).toMatchObject({
-      status: "error", errors: [{ path: cwd, message: "-32000: skills/list failed" }],
+      status: "error", errors: [{ path: cwd, message: "skills/list failed" }],
     });
     context.bridge.failing.delete("skills/list");
     await context.actions.loadSkills(cwd);
@@ -787,7 +787,7 @@ describe("side chats", () => {
     expect(state.btw.sides).toEqual({});
     expect(state.btw.pending).toEqual({});
     expect(state.btw.drafts[sideDraftKey(THREAD_ID, null)]).toBe("what changed?");
-    expect(selectPanelNotices(state, THREAD_ID, null).map((notice) => notice.message)).toEqual(["-32000: thread/start failed"]);
+    expect(selectPanelNotices(state, THREAD_ID, null).map((notice) => notice.message)).toEqual(["thread/start failed"]);
     expect(selectToastNotice(state)).toBeNull();
   });
 
@@ -797,7 +797,7 @@ describe("side chats", () => {
     context.bridge.failing.add("turn/start");
     expect(await context.actions.askNewSide(request)).toBe(false);
     const state = context.store.getState();
-    expect(selectPanelNotices(state, THREAD_ID, SIDE_ID).map((notice) => notice.message)).toEqual(["-32000: turn/start failed"]);
+    expect(selectPanelNotices(state, THREAD_ID, SIDE_ID).map((notice) => notice.message)).toEqual(["turn/start failed"]);
     expect(selectToastNotice(state)).toBeNull();
   });
 

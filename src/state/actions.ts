@@ -130,8 +130,10 @@ function sessionOf(result: ThreadSessionResult): SessionModel {
   return { modelProvider: result.modelProvider, model: result.model, reasoningEffort: result.reasoningEffort };
 }
 
+/** The human part of an error: bridge errors arrive as "<JSON-RPC code>: <message>", and users see only the message. */
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  const raw = error instanceof Error ? error.message : String(error);
+  return raw.replace(/^-?\d+:\s+/, "");
 }
 
 export function createActions(store: AppStore, bridge: OmoBridgeApi, options: ActionOptions = {}): AppActions {

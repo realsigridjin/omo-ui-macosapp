@@ -347,7 +347,7 @@ export function SetupWizard() {
                             <WorkspaceBadge cwd={project.cwd} size="sm" />
                             <span className={css.projectName}>{project.label}</span>
                             <span className={css.projectMeta}>
-                              <span>{t("wizard.project.threadCount", { count: project.count })}</span>
+                              <span>{project.count === 1 ? t("wizard.project.threadCountOne") : t("wizard.project.threadCount", { count: project.count })}</span>
                               {project.lastActivity !== null && project.lastActivity > 0 && (
                                 <span>{formatThreadTime(project.lastActivity, nowMs, t, timeFormat, locale)}</span>
                               )}
@@ -364,7 +364,7 @@ export function SetupWizard() {
             <>
               <dl className={css.summary}>
                 <dt>{t("wizard.ready.model")}</dt>
-                <dd className={css.summaryValue}>{selectedModel?.displayName ?? t("composer.model.none")}</dd>
+                <dd className={css.summaryValue}>{selectedModel?.displayName ?? t("shell.settings.model.askDefault")}</dd>
                 <dt>{t("wizard.ready.projects")}</dt>
                 <dd className={css.summaryValue}>
                   {selectedNames.length === 0 ? t("wizard.ready.noProjects") : selectedNames.join(" · ")}

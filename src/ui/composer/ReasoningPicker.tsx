@@ -114,7 +114,7 @@ export function ReasoningPicker({ disabled }: { disabled: boolean }) {
           setOpen(!open);
         }}
       >
-        <span className={css.triggerLabel}>{t("composer.reasoning.label")}</span>
+        <span className={css.triggerLabel}>{currentEffort === null ? t("composer.reasoning.label") : t(EFFORT_KEY[currentEffort])}</span>
         <IconChevronDownOutlineRegular className={clsx(css.chevron, open && css.chevronOpen)} size={12} />
       </button>
 

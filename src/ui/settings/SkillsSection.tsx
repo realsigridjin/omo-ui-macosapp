@@ -55,7 +55,7 @@ export function SkillsSection() {
                   <div className={css.rowTitle}>
                     <code className={css.mono}>{skill.name}</code>
                   </div>
-                  <div className={css.rowHint}>{skill.shortDescription ?? skill.description}</div>
+                  <div className={css.rowHint} data-clamp="2" title={skill.shortDescription ?? skill.description}>{skill.shortDescription ?? skill.description}</div>
                 </div>
                 <span className={css.badge}>{t(`shell.settings.skills.scope.${skill.scope}`)}</span>
               </div>

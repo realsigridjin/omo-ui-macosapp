@@ -3,6 +3,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import clsx from "clsx";
 import {
+  IconArchiveOffOutlineRegular,
+  IconArchiveOutlineRegular,
   IconChevronDownOutlineRegular,
   IconEditOutlineRegular,
   IconFolderOpenOutlineRegular,
@@ -185,7 +187,7 @@ export function ThreadRow({ thread, active, nowMs, onOpen, onRename, onRequestDe
   const items: MenuEntry[] = [
     ...(onSettle === undefined
       ? []
-      : [{ id: "settle", label: settled ? t("shell.sidebar.unsettle") : t("shell.sidebar.settle") } as const]),
+      : [{ id: "settle", label: settled ? t("shell.sidebar.unsettle") : t("shell.sidebar.settle"), icon: settled ? <IconArchiveOffOutlineRegular /> : <IconArchiveOutlineRegular /> } as const]),
     { id: "rename", label: t("shell.sidebar.rename"), icon: <IconEditOutlineRegular /> },
     { id: "reveal", label: t("shell.sidebar.revealInFinder"), icon: <IconFolderOpenOutlineRegular /> },
     { type: "separator", id: "danger" },

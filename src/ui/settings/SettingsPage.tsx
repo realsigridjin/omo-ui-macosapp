@@ -274,7 +274,7 @@ export function SettingsPage() {
               <Button variant="outline" onClick={() => setConfirming(false)}>
                 {t("common.cancel")}
               </Button>
-              <Button variant="primary" data-testid={TESTID.settingsRestoreConfirm} onClick={restoreDefaults}>
+              <Button variant="primary" className={css.destructive} data-testid={TESTID.settingsRestoreConfirm} onClick={restoreDefaults}>
                 {t("shell.settings.restoreConfirmAction")}
               </Button>
             </div>
