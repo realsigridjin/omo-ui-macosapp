@@ -1,6 +1,7 @@
 import { createContext, createElement, useContext, useMemo, type ReactNode } from "react";
 import type { LocalePreference } from "../../shared/ipc";
 import { messages as activity } from "./activity";
+import { messages as agents } from "./agents";
 import { messages as btw } from "./btw";
 import { messages as common } from "./common";
 import { messages as composer } from "./composer";
@@ -23,10 +24,10 @@ function aligned<D extends Dictionary>(dictionary: Aligned<D>): D {
   return dictionary;
 }
 
-const DICTIONARIES = [aligned(common), aligned(shell), aligned(conversation), aligned(composer), aligned(activity), aligned(btw), aligned(wizard)] as const;
+const DICTIONARIES = [aligned(common), aligned(shell), aligned(conversation), aligned(composer), aligned(activity), aligned(agents), aligned(btw), aligned(wizard)] as const;
 
-const EN = { ...common.en, ...shell.en, ...conversation.en, ...composer.en, ...activity.en, ...btw.en, ...wizard.en } as const;
-const KO = { ...common.ko, ...shell.ko, ...conversation.ko, ...composer.ko, ...activity.ko, ...btw.ko, ...wizard.ko } as const;
+const EN = { ...common.en, ...shell.en, ...conversation.en, ...composer.en, ...activity.en, ...agents.en, ...btw.en, ...wizard.en } as const;
+const KO = { ...common.ko, ...shell.ko, ...conversation.ko, ...composer.ko, ...activity.ko, ...agents.ko, ...btw.ko, ...wizard.ko } as const;
 
 export type MessageKey = keyof typeof EN;
 

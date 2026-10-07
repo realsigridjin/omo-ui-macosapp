@@ -36,6 +36,22 @@ const turnStarted = (threadId: string, turnId: string, receivedAtMs = 1_000) =>
     receivedAtMs,
   );
 
+describe("right-panel exclusivity", () => {
+  it("opens at most one of the side chat and Agents panels at a time", () => {
+    const sideOpen = reduce(createInitialState(), { type: "btw/toggled", open: true });
+    expect(sideOpen.btw.open).toBe(true);
+    const agentsOpen = reduce(sideOpen, { type: "agents/toggled", open: true });
+    expect(agentsOpen.agents.open).toBe(true);
+    expect(agentsOpen.btw.open).toBe(false);
+    const sideAgain = reduce(agentsOpen, { type: "btw/toggled", open: true });
+    expect(sideAgain.btw.open).toBe(true);
+    expect(sideAgain.agents.open).toBe(false);
+    const agentsClosed = reduce(sideAgain, { type: "agents/toggled", open: false });
+    expect(agentsClosed).toBe(sideAgain);
+    expect(reduce(agentsOpen, { type: "agents/toggled", open: true })).toBe(agentsOpen);
+  });
+});
+
 describe("probe replay", () => {
   const events = probeNotificationEvents();
 

@@ -5,12 +5,17 @@ export const SIDEBAR_MIN_WIDTH = 220;
 export const SIDEBAR_MAX_WIDTH = 420;
 export const SIDEBAR_DEFAULT_WIDTH = 280;
 
+/** Docked width choice of the Agents panel; the width constants live with the panel. */
+export type AgentsPanelSize = "normal" | "wide" | "maximized";
+
 export interface UiState {
   settingsOpen: boolean;
   /** First-run wizard visibility; opens on launch until the onboardingCompleted preference is true. */
   onboardingOpen: boolean;
   sidebarVisible: boolean;
   sidebarWidth: number;
+  /** Docked width choice of the Agents panel. */
+  agentsPanelSize: AgentsPanelSize;
   /** Last preferences read from or written through the bridge; null until the first load. */
   preferences: Preferences | null;
 }
@@ -20,6 +25,7 @@ let state: UiState = {
   onboardingOpen: false,
   sidebarVisible: true,
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
+  agentsPanelSize: "normal",
   preferences: null,
 };
 const listeners = new Set<() => void>();
@@ -48,6 +54,7 @@ export const uiState = {
   setSidebarVisible: (sidebarVisible: boolean): void => update({ sidebarVisible }),
   toggleSidebar: (): void => update({ sidebarVisible: !state.sidebarVisible }),
   setSidebarWidth: (width: number): void => update({ sidebarWidth: clampSidebarWidth(width) }),
+  setAgentsPanelSize: (size: AgentsPanelSize): void => update({ agentsPanelSize: size }),
   /** Records preferences loaded from the bridge or returned by `setPreferences`; App.tsx re-applies theme and locale from it. */
   setPreferences: (preferences: Preferences): void => update({ preferences }),
 };
