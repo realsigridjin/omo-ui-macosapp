@@ -171,6 +171,11 @@ export interface SkillCatalog {
   stale: boolean;
 }
 
+/** Whether the Agents DAG panel occupies the right-panel column; it and the side chat exclude each other. */
+export interface AgentsState {
+  open: boolean;
+}
+
 export interface AppState {
   mcp: { servers: import("./mcp").McpServer[]; loading: boolean; error: string | null; loadedAt: number | null };
   bridge: BridgeStatus | null;
@@ -191,6 +196,7 @@ export interface AppState {
   /** Monotonic across bridge reconnects to fence responses from the previous process. */
   skillGeneration: number;
   btw: BtwState;
+  agents: AgentsState;
 }
 
 export type AppEvent =
@@ -227,4 +233,5 @@ export type AppEvent =
   | { type: "btw/contextSet"; parentId: string; attached: boolean }
   | { type: "btw/draftSet"; key: string; text: string }
   | { type: "btw/starting"; cwd: string }
-  | { type: "btw/started"; cwd: string; side: SideChat | null };
+  | { type: "btw/started"; cwd: string; side: SideChat | null }
+  | { type: "agents/toggled"; open: boolean };

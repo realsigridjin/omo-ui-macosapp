@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { runDagScenario } from "./dag-scenario.mjs";
+import { runDagWavesScenario } from "./dag-waves-scenario.mjs";
 
 const VERSION_LINE = "omo 5.1.4-fake (engine: fake)";
 const USAGE = "usage: fake-omo --version | fake-omo app-server --listen stdio://\n";
@@ -676,6 +677,7 @@ function runScenario(record, turn, text) {
   const scene = DEMO?.scenes?.find((candidate) => text.includes(candidate.match));
   if (scene !== undefined) return runDemoScene(record, turn, scene);
   if (text.includes("SCENARIO:omo-live")) return runLive(record, turn);
+  if (text.includes("SCENARIO:dag-waves")) return runDagWavesScenario(record, turn, { notify, guard, sleep: (ms) => sleep(turn, ms) });
   if (text.includes("SCENARIO:dag")) return runDagScenario(record, turn, { home, notify, guard });
   if (text === "SCENARIO:skills-history") {
     const item = openAgentMessage(turn);

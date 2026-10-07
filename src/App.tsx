@@ -3,6 +3,8 @@ import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { createActions, createAppStore, localSideStorage } from "./state";
 import { I18nProvider, resolveLocale } from "./i18n";
 import { ActionsContext, StoreContext, useAppSelector } from "./ui/app-context";
+import { AGENTS_PANEL_WIDTHS, AgentsPanel } from "./ui/agents/AgentsPanel";
+import { useAgentsPanelShortcut } from "./ui/agents/AgentsToggle";
 import { SIDE_PANEL_WIDTH, SidePanel } from "./ui/btw/SidePanel";
 import { useSidePanelShortcut } from "./ui/btw/SideToggle";
 import { Composer } from "./ui/composer/Composer";
@@ -30,12 +32,15 @@ function MainPane() {
 }
 
 const renderSidePanel = (placement: "docked" | "overlay") => <SidePanel placement={placement} />;
+const renderAgentsPanel = (placement: "docked" | "overlay") => <AgentsPanel placement={placement} />;
 
 function Shell() {
   const bridgeState = useAppSelector((state) => state.bridge?.state ?? null);
   const sidePanelOpen = useAppSelector((state) => state.btw.open);
+  const agentsPanelOpen = useAppSelector((state) => state.agents.open);
   useSidePanelShortcut();
-  const { sidebarVisible, sidebarWidth, onboardingOpen } = useUiState();
+  useAgentsPanelShortcut();
+  const { sidebarVisible, sidebarWidth, agentsPanelSize, onboardingOpen } = useUiState();
   const newSession = useNewSessionFlow();
 
   useEffect(() => {
@@ -78,8 +83,8 @@ function Shell() {
         sidebarVisible={sidebarVisible}
         sidebarWidth={sidebarWidth}
         onSidebarWidthChange={uiState.setSidebarWidth}
-        rightPanel={sidePanelOpen ? renderSidePanel : null}
-        rightPanelWidth={SIDE_PANEL_WIDTH}
+        rightPanel={agentsPanelOpen ? renderAgentsPanel : sidePanelOpen ? renderSidePanel : null}
+        rightPanelWidth={agentsPanelOpen ? AGENTS_PANEL_WIDTHS[agentsPanelSize] : SIDE_PANEL_WIDTH}
       />
       <SettingsPage />
       {onboardingOpen && <SetupWizard />}

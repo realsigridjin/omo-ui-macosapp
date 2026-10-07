@@ -34,6 +34,7 @@ export function createInitialState(): AppState {
     loadedSkillCwds: {},
     skillGeneration: 0,
     btw: emptyBtwState(),
+    agents: { open: false },
   };
 }
 
@@ -241,8 +242,17 @@ export function reduce(state: AppState, event: AppEvent): AppState {
     case "btw/contextSet":
     case "btw/draftSet":
     case "btw/starting":
-    case "btw/started":
-      return reduceBtw(state, event);
+    case "btw/started": {
+      const reduced = reduceBtw(state, event);
+      if (event.type !== "btw/toggled" || !event.open || !state.agents.open) return reduced;
+      return { ...reduced, agents: { ...reduced.agents, open: false } };
+    }
+    case "agents/toggled": {
+      if (state.agents.open === event.open) return state;
+      const agents = { ...state.agents, open: event.open };
+      if (!event.open || !state.btw.open) return { ...state, agents };
+      return { ...state, agents, btw: { ...state.btw, open: false } };
+    }
     default:
       return assertNever(event);
   }

@@ -109,6 +109,8 @@ export interface AppActions {
   dismissNotice(id: string): void;
   /** Shows or hides the side chat panel. */
   setSidePanel(open: boolean): void;
+  /** Shows or hides the Agents DAG panel; opening it closes the side chat panel. */
+  setAgentsPanel(open: boolean): void;
   /** Shows `sideId` (null: the new-side composer) for `parentId`, loading a retained side chat's history first. */
   selectSide(parentId: string, sideId: string | null): Promise<void>;
   /** Attaches or detaches the main thread's background for the next new side chat of `parentId`. */
@@ -688,6 +690,10 @@ export function createActions(store: AppStore, bridge: OmoBridgeApi, options: Ac
 
     setSidePanel(open) {
       store.dispatch({ type: "btw/toggled", open });
+    },
+
+    setAgentsPanel(open) {
+      store.dispatch({ type: "agents/toggled", open });
     },
 
     async selectSide(parentId, sideId) {

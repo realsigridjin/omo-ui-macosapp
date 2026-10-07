@@ -14,6 +14,7 @@ import { useT } from "../../i18n";
 import type { Conversation, ConversationTurn, PendingRequest } from "../../state";
 import { selectActiveConversation, selectIsTurnActive, selectPendingRequestsForThread } from "../../state";
 import { useActions, useAppSelector } from "../app-context";
+import { AgentsToggle } from "../agents/AgentsToggle";
 import { SideToggle } from "../btw/SideToggle";
 import { TESTID } from "../testids";
 import { ActivityPanel, ActivityToggle } from "./ActivityPanel";
@@ -216,7 +217,12 @@ export function ConversationPane() {
       ),
     [threadId, showActivity, activityId, toggleActivity],
   );
-  const panels = useMemo(() => (threadId === null ? null : <SideToggle />), [threadId]);
+  const panels = useMemo(() => (threadId === null ? null : (
+    <>
+      <SideToggle />
+      <AgentsToggle />
+    </>
+  )), [threadId]);
   return (
     <section className={css.root} data-testid={TESTID.conversation}>
       <ConversationHeader active={threadId !== null} thread={thread} running={turnActive} activity={activity} panels={panels} />
