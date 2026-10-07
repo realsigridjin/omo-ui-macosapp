@@ -11,6 +11,7 @@ import { useAskSide } from "../btw/use-ask-side";
 import { ConversationDock } from "../conversation/ConversationDock";
 import { TESTID } from "../testids";
 import { updatePreferences, useUiState } from "../ui-state";
+import { AgentsWorkingStrip } from "./AgentsWorkingStrip";
 import { CheckoutBar } from "./CheckoutBar";
 import { ModelPicker } from "./ModelPicker";
 import { PermissionPicker } from "./PermissionPicker";
@@ -337,6 +338,7 @@ export function Composer() {
   return (
     <div className={css.root}>
       <ConversationDock />
+      <AgentsWorkingStrip />
       <div
         className={clsx(css.card, !connected && css.cardDisabled, keyword !== null && css.cardMagic, dropping && css.cardDrop)}
         data-testid={TESTID.composer}

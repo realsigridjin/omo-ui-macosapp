@@ -1,0 +1,38 @@
+/* Tucked under the composer card's top edge, inset to the card's rounded corners. */
+.strip {
+  box-sizing: border-box;
+  width: calc(100% - 28px);
+  max-width: calc(var(--dsh-composer-card-max-width) - 28px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 -1px;
+  padding: 6px 12px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: var(--dsw-alias-interactive-bg-hover);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+}
+
+.stop {
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stop:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}

@@ -121,10 +121,19 @@
   font-weight: 600;
 }
 
-.runningSlot {
+.runningPill {
   flex: none;
   display: inline-flex;
   align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, transparent);
+  color: var(--dsw-alias-state-business-primary);
+  font-size: 11px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .time {
