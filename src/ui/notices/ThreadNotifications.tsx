@@ -4,6 +4,7 @@ import { decideNotification, eventFromNotification, eventFromServerRequest } fro
 import { threadTitle } from "../conversation/format";
 import { useActions } from "../app-context";
 import { useAppStore } from "../../state/store";
+import { isSideThread } from "../../state/btw";
 import { useT } from "../../i18n";
 import { uiState } from "../ui-state";
 
@@ -30,7 +31,8 @@ export function ThreadNotifications() {
       });
       if (!decision.system && !decision.toast) return;
       const thread = state.threads[event.threadId];
-      if (thread === undefined) return;
+      // A side chat answers inside its own panel; its turns are not another thread's outcome.
+      if (thread === undefined || isSideThread(state, thread)) return;
       const title = threadTitle(thread, t("shell.newSession"));
       const body =
         event.kind === "failed" && event.errorMessage !== null

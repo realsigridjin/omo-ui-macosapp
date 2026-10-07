@@ -41,7 +41,7 @@
 }
 
 .workspace {
-  flex: 0 1 auto;
+  flex: 0 3 auto;
   min-width: 0;
   max-width: 220px;
   overflow: hidden;
@@ -57,7 +57,7 @@
 
 .title {
   flex: 0 1 auto;
-  min-width: 0;
+  min-width: min(6em, 100%);
   margin: 0;
   overflow: hidden;
   color: var(--dsw-alias-label-primary);
@@ -85,4 +85,12 @@
   font-size: 12px;
   line-height: 18px;
   --dsw-alias-label-shimmer: var(--dsw-alias-label-deep-diving-shimmer);
+}
+
+/* In a narrow window the thread title is what tells threads apart; the workspace badge stays as the cue. */
+@media (max-width: 760px) {
+  .workspace,
+  .separator {
+    display: none;
+  }
 }
