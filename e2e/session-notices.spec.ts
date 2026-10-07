@@ -41,7 +41,16 @@ test("a memory write shows omo's Remembered card, and special messages show as e
   try {
     const { page } = launched;
     await threadRow(page, "notice-thread").getByRole("button").first().click();
+    const turn = byTestId(page, TESTID.turn);
     const card = byTestId(page, TESTID.memoryWrite);
+    // Re-opening a thread can remount the turn after this click; expanding until the card shows stays stable.
+    const expandSteps = async (): Promise<void> => {
+      for (let attempt = 0; attempt < 2 && !(await card.isVisible()); attempt += 1) {
+        await turn.locator(`[data-testid="${TESTID.workedFoldToggle}"]`).click();
+      }
+      await expect(card).toBeVisible();
+    };
+    await expandSteps();
     await expect(card).toBeVisible();
     await expect(card).toContainText("Remembered");
     await expect(card).toContainText("8th entry today");
@@ -59,6 +68,7 @@ test("a memory write shows omo's Remembered card, and special messages show as e
     await shot(page, "session-notices-light");
     await setTheme(page, "dark");
     await threadRow(page, "notice-thread").getByRole("button").first().click();
+    await expandSteps();
     await expect(card).toBeVisible();
     await shot(page, "session-notices-dark");
   } finally {

@@ -91,6 +91,7 @@ test("full scenario: reasoning, approval, question, markdown answer", async () =
   await expect(code).toBeVisible();
   await expect(code.locator('.line span[style*="--shiki-token"]').first()).toBeAttached();
 
+  await lastTurn(page).locator(`[data-testid="${TESTID.workedFoldToggle}"]`).click();
   await tool.getByRole("button").first().click();
   await expect(tool.locator("pre.shiki", { hasText: "1+1" })).toBeVisible();
   await shot(page, "C002-final");
@@ -120,6 +121,7 @@ test("relaunch lists the thread and restores its history", async () => {
   await expect(row).toBeVisible();
   await row.getByRole("button").first().click();
   await expect(row).toHaveAttribute("aria-current", "page");
+  await page.locator(`[data-testid="${TESTID.workedFoldToggle}"]`).click();
   await expect(page.locator(`[data-testid="${TESTID.toolCard}"][data-tool="eval"]`)).toBeVisible();
   await expect(byTestId(page, TESTID.assistantMessage).filter({ hasText: "You picked B" })).toBeVisible();
   await shot(page, "C002-resumed");

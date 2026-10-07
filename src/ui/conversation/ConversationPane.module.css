@@ -192,3 +192,23 @@
   color: var(--dsw-alias-label-tertiary);
   font-variant-numeric: tabular-nums;
 }
+
+.waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 22px;
+}
+
+.waitingIcon {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.waitingLabel {
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
