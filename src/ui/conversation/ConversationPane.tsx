@@ -4,6 +4,7 @@ import clsx from "clsx";
 import {
   Button,
   IconChevronDownOutlineRegular,
+  IconClockOutlineRegular,
   MarkdownDelegateProvider,
   StateDot,
   TextShimmer,
@@ -12,7 +13,7 @@ import { resolveWorkspacePath } from "@deepseek-ai/dsh-util-workspace-path";
 import type { ThreadItem } from "../../../shared/protocol";
 import { useT } from "../../i18n";
 import type { Conversation, ConversationTurn, PendingRequest } from "../../state";
-import { selectActiveConversation, selectIsTurnActive, selectPendingRequestsForThread } from "../../state";
+import { selectActiveConversation, selectIsTurnActive, selectPendingRequestsForThread, selectTasks } from "../../state";
 import { useActions, useAppSelector } from "../app-context";
 import { SideToggle } from "../btw/SideToggle";
 import { TESTID } from "../testids";
@@ -26,6 +27,7 @@ import { TurnView, type BranchContext } from "./TurnView";
 import { userMessageParts, UserBubble } from "./UserBubble";
 import { useStickToBottom } from "./use-stick-to-bottom";
 import { durationParts, QUIET_AFTER_MS, workingStatus } from "./working-status";
+import { waitingPhase, type WaitingPhase } from "./work-log";
 import css from "./ConversationPane.module.css";
 
 const NO_TURNS: readonly ConversationTurn[] = [];
@@ -68,7 +70,19 @@ function HistoryError({ threadId, message }: { threadId: string; message: string
   );
 }
 
-function WorkingIndicator({ turn }: { turn: ConversationTurn | null }) {
+/**
+ * The status line under the newest bubble: a muted waiting line while omo has not produced work yet (with a
+ * ticking seconds counter), otherwise the working line with elapsed and idle detail.
+ */
+function WorkingIndicator({
+  turn,
+  phase,
+  sinceMs,
+}: {
+  turn: ConversationTurn | null;
+  phase: WaitingPhase | null;
+  sinceMs: number | null;
+}) {
   const t = useT();
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
@@ -82,13 +96,28 @@ function WorkingIndicator({ turn }: { turn: ConversationTurn | null }) {
   };
   return (
     <div className={css.working} data-testid={TESTID.workingIndicator} data-queued={status?.queuedMessage || undefined} role="status">
-      <StateDot state="ongoing" size={12} />
-      <TextShimmer active>{t("conversation.working")}</TextShimmer>
-      {status !== null && (
-        <span className={css.workingDetail} data-testid={TESTID.workingDetail}>
-          {format(status.elapsedMs)}
-          {status.idleMs >= QUIET_AFTER_MS && ` · ${t("conversation.working.lastActivity", { time: format(status.idleMs) })}`}
-          {status.queuedMessage && ` · ${t("conversation.working.queued")}`}
+      {phase === null ? (
+        <>
+          <StateDot state="ongoing" size={12} />
+          <TextShimmer active>{t("conversation.working")}</TextShimmer>
+          {status !== null && (
+            <span className={css.workingDetail} data-testid={TESTID.workingDetail}>
+              {format(status.elapsedMs)}
+              {status.idleMs >= QUIET_AFTER_MS && ` · ${t("conversation.working.lastActivity", { time: format(status.idleMs) })}`}
+              {status.queuedMessage && ` · ${t("conversation.working.queued")}`}
+            </span>
+          )}
+        </>
+      ) : (
+        <span className={css.waiting} data-testid={TESTID.waitingStatus}>
+          <IconClockOutlineRegular size={13} className={css.waitingIcon} />
+          <span className={css.waitingLabel}>
+            {t(phase === "startingSession" ? "conversation.workLog.waitingStart" : "conversation.workLog.waitingModel")}
+          </span>
+          <span className={css.workingDetail} data-testid={TESTID.workingDetail}>
+            {format(Math.max(0, nowMs - (sinceMs ?? nowMs)))}
+            {status?.queuedMessage && ` · ${t("conversation.working.queued")}`}
+          </span>
         </span>
       )}
     </div>
@@ -132,17 +161,22 @@ function Transcript({ threadId, cwd, turnActive }: { threadId: string; cwd: stri
     () => (activeTurnId === null ? null : (turns.find((turn) => turn.id === activeTurnId) ?? null)),
     [turns, activeTurnId],
   );
+  const tasks = useAppSelector((state) => selectTasks(state, threadId));
   const streaming = activeTurn?.items.some((entry) => entry.streaming) ?? false;
+  const pendingUserMessages = conversation?.pendingUserMessages ?? [];
+  const waiting = waitingPhase(turnActive ? activeTurn : null, !turnActive && pendingUserMessages.length > 0);
+  const waitingSinceMs = waiting === null ? null : activeTurn?.startedAtMs ?? pendingUserMessages.at(-1)?.sentAtMs ?? null;
   const showWorking = turnActive && !streaming && pending.length === 0;
+  const showStatusLine = pending.length === 0 && (showWorking || waiting !== null);
   const historyState = conversation?.historyState ?? "idle";
-  const branchIdle = !turnActive && (conversation?.pendingUserMessages.length ?? 0) === 0;
+  const branchIdle = !turnActive && pendingUserMessages.length === 0;
   const branch = useMemo<BranchContext | null>(() => (hasPath ? { threadId, idle: branchIdle } : null), [hasPath, threadId, branchIdle]);
   const empty =
     (historyState === "idle" || historyState === "loaded") &&
     turns.length === 0 &&
     pending.length === 0 &&
     !turnActive &&
-    (conversation?.pendingUserMessages.length ?? 0) === 0;
+    pendingUserMessages.length === 0;
   const openExternalLink = useCallback((href: string) => void window.omo.openExternal(href), []);
   const openFile = useCallback(
     (path: string) => void window.omo.revealPath(resolveWorkspacePath(cwd ?? undefined, path)),
@@ -167,13 +201,13 @@ function Transcript({ threadId, cwd, turnActive }: { threadId: string; cwd: stri
           <MarkdownDelegateProvider openExternalLink={openExternalLink} openFile={openFile}>
             {turns.map((turn, index) => (
               <TurnView key={turn.id} turn={turn} cwd={cwd} branch={branch} last={index === turns.length - 1}
-                notices={noticesByTurn.get(index)} memoryWrites={annotations?.memoryWrites} />
+                notices={noticesByTurn.get(index)} memoryWrites={annotations?.memoryWrites} tasks={tasks} />
             ))}
           </MarkdownDelegateProvider>
-          {conversation?.pendingUserMessages.map((message) => (
+          {pendingUserMessages.map((message) => (
             <UserBubble key={message.clientId} text={message.text} images={userMessageParts(message.images ?? []).images} sending />
           ))}
-          {showWorking && <WorkingIndicator turn={activeTurn} />}
+          {showStatusLine && <WorkingIndicator turn={activeTurn} phase={waiting} sinceMs={waitingSinceMs} />}
           {pending.map((request) => (
             <RenderBoundary key={requestKey(request)} label={`a ${request.kind} request`} resetKey={request}>
               <PendingRequestCard request={request} conversation={conversation} cwd={cwd} />
