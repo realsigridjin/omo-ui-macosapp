@@ -18,9 +18,9 @@ export function IphoneSection() {
   }, []);
   const state = status?.state ?? "searching";
   return <section className={css.section} data-testid={TESTID.settingsIphone}>
-    <SectionHeading title={t("shell.settings.nav.iphone")} intro={t("shell.settings.iphone.intro")} />
+    <SectionHeading title={t("shell.settings.nav.iphone")} intro={t(window.omo.platform === "win32" ? "shell.settings.iphone.unsupported" : "shell.settings.iphone.intro")} />
     <div className={css.card}><div className={css.cardBody}>
-      <p role="status" data-testid={TESTID.iphoneStatus} data-state={state}>{t(status?.enabled === false ? "shell.settings.iphone.disabled" : `shell.settings.iphone.${state}`)}</p>
+      <p role="status" data-testid={TESTID.iphoneStatus} data-state={state}>{t(window.omo.platform === "win32" ? "shell.settings.iphone.unsupported" : status?.enabled === false ? "shell.settings.iphone.disabled" : `shell.settings.iphone.${state}`)}</p>
       {error && <p className={css.error} role="alert">{t("shell.settings.iphone.error", { message: error })}</p>}
       {status?.devices.map((device) => <dl className={css.facts} key={device.id}>
         <dt>{t("shell.settings.iphone.device")}</dt><dd>{device.name} · {device.serial}</dd>

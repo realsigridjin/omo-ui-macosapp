@@ -14,10 +14,12 @@ import {
   observeStickyMenuGroups,
 } from "@deepseek-ai/dsh-client-ui-primitives";
 import type { Model, ReasoningEffort } from "../../../shared/protocol";
+import type { ModelProfile } from "../../../shared/ipc";
 import { useT } from "../../i18n";
 import type { MessageKey } from "../../i18n";
 import { useActions, useAppSelector } from "../app-context";
 import { TESTID } from "../testids";
+import { uiState, updatePreferences, useUiState } from "../ui-state";
 import { resolveComposerModel, selectActiveSessionModel } from "../../state";
 import { filterGroups, groupModels, resolveEffort } from "./model-groups";
 import css from "./ModelPicker.module.css";
@@ -44,6 +46,7 @@ const selectModels = (state: { models: Model[] }): Model[] => state.models;
 export function ModelPicker({ disabled }: { disabled: boolean }) {
   const t = useT();
   const actions = useActions();
+  const { preferences } = useUiState();
   const models = useAppSelector(selectModels);
   const modelId = useAppSelector((state) => state.composer.modelId);
   const effort = useAppSelector((state) => state.composer.effort);
@@ -51,6 +54,9 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
 
   const profile = useAppSelector((state) => state.composer.profile ?? null);
   const [tab, setTab] = useState<"profile" | "specific">("profile");
+  const [editingProfile, setEditingProfile] = useState<ModelProfile | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
@@ -68,8 +74,10 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
   const visibleGroups = useMemo(() => filterGroups(groups, showSearch ? query : ""), [groups, query, showSearch]);
   const visibleModels = useMemo(() => visibleGroups.flatMap((group) => group.models), [visibleGroups]);
   const current = resolveComposerModel(models, modelId, session);
+  const configuredModelId = editingProfile === null ? undefined : preferences?.profileModels?.[editingProfile];
+  const configuredModelUnavailable = configuredModelId !== undefined && !models.some((model) => !model.hidden && model.id === configuredModelId);
   const currentEffort = current === null && effort === null ? (session?.reasoningEffort ?? null) : resolveEffort(current, effort);
-  const efforts = current?.supportedReasoningEfforts ?? [];
+  const efforts = editingProfile === null ? current?.supportedReasoningEfforts ?? [] : [];
   const activeIndex = visibleModels.length === 0 ? -1 : Math.min(highlighted, visibleModels.length - 1);
 
   const effortLabel = currentEffort === null ? null : t(EFFORT_KEY[currentEffort]);
@@ -141,6 +149,8 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
     const currentIndex = current === null ? -1 : visibleModels.findIndex((model) => model.id === current.id);
     triggerRef.current?.focus();
     setQuery("");
+    setEditingProfile(null);
+    setSaveError(null);
     setHighlighted(Math.max(0, currentIndex));
     focusPending.current = true;
     setOpen(true);
@@ -151,7 +161,29 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
     if (restoreFocus) queueMicrotask(() => triggerRef.current?.focus());
   };
 
+  const saveProfileModel = async (modelId: string | null): Promise<void> => {
+    if (editingProfile === null || saving) return;
+    const profileModels = { ...uiState.get().preferences?.profileModels };
+    if (modelId === null) delete profileModels[editingProfile];
+    else profileModels[editingProfile] = modelId;
+    setSaving(true);
+    try {
+      await updatePreferences({ profileModels });
+      setEditingProfile(null);
+      setTab("profile");
+      close(true);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const chooseModel = (model: Model): void => {
+    if (editingProfile !== null) {
+      void saveProfileModel(model.id);
+      return;
+    }
     void actions.selectModel(model.id, resolveEffort(model, effort));
     close(true);
   };
@@ -192,7 +224,7 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
     }
     if (event.key === "Enter") {
       const target = event.target;
-      if (target instanceof HTMLElement && target.dataset["effort"] !== undefined) return;
+      if (target instanceof HTMLElement && (target.dataset["effort"] !== undefined || target.dataset["profileAutomatic"] !== undefined)) return;
       event.preventDefault();
       const model = visibleModels[activeIndex];
       if (model !== undefined) chooseModel(model);
@@ -245,13 +277,33 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
             aria-label={t("composer.model.label")}
           >
             <div className={css.tabs} role="tablist" aria-label={t("composer.model.label")}>
-              <button type="button" role="tab" aria-selected={tab === "profile"} data-testid={TESTID.profileTab} onClick={() => setTab("profile")}>{t("composer.profile.tab")}</button>
-              <button type="button" role="tab" aria-selected={tab === "specific"} data-testid={TESTID.specificModelTab} onClick={() => { setTab("specific"); focusPending.current = true; }}>{t("composer.profile.specific")}</button>
+              <button type="button" role="tab" disabled={saving} aria-selected={tab === "profile"} data-testid={TESTID.profileTab} onClick={() => { setEditingProfile(null); setTab("profile"); }}>{t("composer.profile.tab")}</button>
+              <button type="button" role="tab" disabled={saving} aria-selected={tab === "specific"} data-testid={TESTID.specificModelTab} onClick={() => { setEditingProfile(null); setTab("specific"); focusPending.current = true; }}>{t("composer.profile.specific")}</button>
             </div>
-            {tab === "profile" ? <ProfilePicker models={models} current={profile} onSelect={(next) => {
-              const resolved = resolveProfile(models, next);
+            {saveError !== null && <div className={css.empty} role="alert">{t("shell.settings.saveFailed", { message: saveError })}</div>}
+            {tab === "profile" ? <ProfilePicker models={models} current={profile} profileModels={preferences?.profileModels} onConfigure={(next) => {
+              setEditingProfile(next);
+              setTab("specific");
+              setQuery("");
+              setHighlighted(0);
+              focusPending.current = true;
+              setSaveError(null);
+            }} onSelect={(next) => {
+              const resolved = resolveProfile(models, next, preferences?.profileModels);
               if (resolved.model) void actions.selectModel(resolved.model.id, resolved.effort, next);
             }} /> : <>
+            {editingProfile !== null && <>
+              <div className={css.effortHeading}>
+                {t(editingProfile.startsWith("daily") ? "composer.profile.daily" : "composer.profile.geeky")} · {t(editingProfile.endsWith("heavy") ? "composer.profile.heavy" : "composer.profile.normal")}
+              </div>
+              <button type="button" className={css.option} data-profile-automatic={editingProfile} disabled={saving} aria-pressed={preferences?.profileModels?.[editingProfile] === undefined} onClick={() => void saveProfileModel(null)}>
+                <span className={css.optionCopy}>{t("composer.profile.automatic")}</span>
+                <span className={css.check}>{preferences?.profileModels?.[editingProfile] === undefined && <IconCheckOutlineRegular />}</span>
+              </button>
+              {configuredModelUnavailable && <div className={css.empty} role="status" data-profile-unavailable={editingProfile}>
+                {configuredModelId} · {t("composer.model.searchEmpty")}
+              </div>}
+            </>}
             {showSearch && (
               <div className={css.searchRow}>
                 <Input
@@ -297,7 +349,7 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
                 <MenuGroup key={group.provider} label={group.provider}>
                   {group.models.map((model) => {
                     const index = optionIndex++;
-                    const selected = current?.id === model.id;
+                    const selected = editingProfile === null ? current?.id === model.id : preferences?.profileModels?.[editingProfile] === model.id;
                     return (
                       <button
                         key={model.id}
@@ -305,6 +357,7 @@ export function ModelPicker({ disabled }: { disabled: boolean }) {
                           optionRefs.current[index] = node;
                         }}
                         type="button"
+                        disabled={saving}
                         role="menuitemradio"
                         aria-checked={selected}
                         id={`${id}-model-${index}`}

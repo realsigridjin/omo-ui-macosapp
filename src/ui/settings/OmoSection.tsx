@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Button, IconDownloadOutlineRegular, IconRefreshOutlineRegular } from "@deepseek-ai/dsh-client-ui-primitives";
-import { OMO_INSTALL_COMMAND } from "../../../shared/ipc";
+import { getOmoInstallCommand } from "../../../shared/ipc";
 import type { Diagnostics } from "../../../shared/ipc";
 import { useT } from "../../i18n";
 import { useAppSelector } from "../../state/store";
@@ -11,11 +11,13 @@ import { updatePreferences, useUiState } from "../ui-state";
 import { errorMessage, useDiagnostics } from "./diagnostics";
 import { SectionHeading, SettingRow } from "./SectionHeading";
 import css from "./SettingsDialog.module.css";
+import { ProxySection } from "./ProxySection";
 
 type RestartState = { kind: "idle" } | { kind: "running" } | { kind: "failed"; message: string };
 
 function PathValue({ value }: { value: string }) {
-  const entries = value.split(":");
+  const separator = window.omo.platform === "win32" ? ";" : ":";
+  const entries = value.split(separator);
   return (
     <pre className={css.pathValue}>
       {entries.map((entry, index) => (
@@ -23,7 +25,7 @@ function PathValue({ value }: { value: string }) {
           {entry}
           {index < entries.length - 1 && (
             <>
-              :<wbr />
+              {separator}<wbr />
             </>
           )}
         </Fragment>
@@ -95,6 +97,7 @@ export function OmoSection() {
   return (
     <section className={css.section}>
       <SectionHeading title={t("shell.settings.nav.omo")} intro={t("shell.settings.omo.intro")} />
+      <ProxySection />
       <div className={css.card}>
         <SettingRow title={t("shell.settings.omo.autoUpdate")} hint={t("shell.settings.omo.autoUpdateHint")}>
           <Button
@@ -159,7 +162,7 @@ export function OmoSection() {
             {installing ? t("shell.onboarding.installing") : t("shell.settings.omo.reinstall")}
           </Button>
         </SettingRow>
-        <code className={css.commandLine}>{OMO_INSTALL_COMMAND}</code>
+        <code className={css.commandLine}>{getOmoInstallCommand(window.omo.platform)}</code>
         {installer.phase.kind !== "idle" && (
           <div className={css.cardFooter}>
             <InstallStatus installer={installer} />

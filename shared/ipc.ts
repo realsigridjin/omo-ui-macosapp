@@ -15,12 +15,25 @@ import type {
   TodoPhase,
   LiveTask,
 } from "./protocol";
+import type { AndroidStatus } from "./android";
+import type { OpencodexAccounts } from "./opencodex";
+import type { WorkspaceFile, WorkspaceDocument } from "./workspace";
+import type { DeviceOverview } from "./device-overview";
+import type { AppUpdateStatus } from "./app-update";
+import type { ModelRoutingInput, ModelRoutingSettings } from "./model-routing";
 
 /** URL of the official omo installer script. */
 export const OMO_INSTALL_SCRIPT_URL = "https://get.omo.dev/install.sh";
 
 /** The official installer command shown on onboarding and in Settings; `install()` runs the same script from a file. */
 export const OMO_INSTALL_COMMAND = `curl -fsSL ${OMO_INSTALL_SCRIPT_URL} | bash` as const;
+
+export const OMO_WINDOWS_INSTALL_SCRIPT_URL = "https://get.omo.dev/install.ps1";
+export const OMO_WINDOWS_INSTALL_COMMAND = `irm ${OMO_WINDOWS_INSTALL_SCRIPT_URL} | iex` as const;
+
+export function getOmoInstallCommand(platform: string): typeof OMO_INSTALL_COMMAND | typeof OMO_WINDOWS_INSTALL_COMMAND {
+  return platform === "win32" ? OMO_WINDOWS_INSTALL_COMMAND : OMO_INSTALL_COMMAND;
+}
 
 export type BridgeState = "locating" | "not-found" | "starting" | "connected" | "exited" | "restarting" | "stopped";
 
@@ -50,7 +63,7 @@ export interface BridgeStatus {
   exitCode: number | null;
   /** Consecutive automatic restart attempts since the last successful connection. */
   restartAttempt: number;
-  installCommand: typeof OMO_INSTALL_COMMAND;
+  installCommand: typeof OMO_INSTALL_COMMAND | typeof OMO_WINDOWS_INSTALL_COMMAND;
   /** Result of this app launch's automatic update, independent of connection failures. */
   update?: OmoUpdateStatus;
 }
@@ -85,6 +98,7 @@ export interface Preferences {
   /** Model id chosen in the composer, or null for the omo default. */
   modelId: string | null;
   modelProfile?: ModelProfile | null;
+  profileModels?: Partial<Record<ModelProfile, string>>;
 }
 
 /** One turn reconstructed from a session JSONL file. */
@@ -138,6 +152,17 @@ export interface InstallLogLine {
 export interface InstallResult {
   ok: boolean;
   exitCode: number | null;
+}
+
+export interface ProxySettings {
+  baseUrl: string;
+  apiKeyConfigured: boolean;
+  modelCount: number;
+}
+
+export interface ProxyInput {
+  baseUrl: string;
+  apiKey?: string;
 }
 
 export type MenuCommand = "new-session" | "settings" | "toggle-sidebar";
@@ -197,6 +222,27 @@ export interface AccountUsage {
 }
 
 export interface OmoBridgeApi {
+  readModelRouting(): Promise<ModelRoutingSettings>;
+  saveModelRouting(input: ModelRoutingInput): Promise<ModelRoutingSettings>;
+  importExistingMcpConfigs(): Promise<{ imported: string[]; sources: number }>;
+  readConfiguredMcpServers(): Promise<Array<{ name: string; enabled: boolean; type: string }>>;
+  getAppUpdateStatus(): Promise<AppUpdateStatus>;
+  checkAppUpdate(): Promise<AppUpdateStatus>;
+  installAppUpdate(): Promise<AppUpdateStatus>;
+  onAppUpdateStatus(listener: (status: AppUpdateStatus) => void): () => void;
+  getDeviceOverview(): Promise<DeviceOverview>;
+  listWorkspaceFiles(cwd: string): Promise<WorkspaceFile[]>;
+  readWorkspaceFile(cwd: string, relativePath: string): Promise<WorkspaceDocument>;
+  getWorkspaceDiff(cwd: string, relativePath: string): Promise<string>;
+  importMcpConfig(): Promise<{ imported: string[] } | null>;
+  readOpencodexAccounts(): Promise<OpencodexAccounts>;
+  getAndroidStatus(): Promise<AndroidStatus>;
+  refreshAndroid(): Promise<AndroidStatus>;
+  connectAndroid(serial: string): Promise<AndroidStatus>;
+  disconnectAndroid(): Promise<AndroidStatus>;
+  onAndroidStatus(listener: (status: AndroidStatus) => void): () => void;
+  getProxySettings(): Promise<ProxySettings>;
+  applyProxySettings(input: ProxyInput): Promise<ProxySettings>;
   /** Reads every stored subscription account's usage windows; one failing account never blanks the others. */
   readAccountUsage(): Promise<AccountUsage[]>;
   /** Opens omo in Terminal running its own sign-in command for `provider` ("/claude-account add", "/gpt-account add", else "/login"). */
@@ -247,6 +293,27 @@ export interface OmoBridgeApi {
 
 /** IPC channel names. Invoke channels use ipcRenderer.invoke; event channels use webContents.send. */
 export const IPC = {
+  readModelRouting: "models:read-routing",
+  saveModelRouting: "models:save-routing",
+  importExistingMcpConfigs: "mcp:import-existing",
+  readConfiguredMcpServers: "mcp:configured",
+  getAppUpdateStatus: "app-update:get-status",
+  checkAppUpdate: "app-update:check",
+  installAppUpdate: "app-update:install",
+  appUpdateStatus: "app-update:status",
+  getDeviceOverview: "devices:overview",
+  listWorkspaceFiles: "workspace:list-files",
+  readWorkspaceFile: "workspace:read-file",
+  getWorkspaceDiff: "workspace:diff",
+  importMcpConfig: "mcp:import-config",
+  readOpencodexAccounts: "accounts:opencodex",
+  getAndroidStatus: "android:get-status",
+  refreshAndroid: "android:refresh",
+  connectAndroid: "android:connect",
+  disconnectAndroid: "android:disconnect",
+  androidStatus: "android:status",
+  getProxySettings: "proxy:get-settings",
+  applyProxySettings: "proxy:apply-settings",
   getIphoneStatus: "iphone:get-status",
   iphoneStatus: "iphone:status",
   getStatus: "omo:get-status",

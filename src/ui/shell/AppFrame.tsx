@@ -111,7 +111,7 @@ export function AppFrame({
   const [viewport, setViewport] = useState(0);
 
   useLayoutEffect(() => {
-    if (window.omo.platform === "darwin") document.documentElement.dataset["platform"] = "darwin";
+    document.documentElement.dataset["platform"] = window.omo.platform;
   }, []);
 
   useLayoutEffect(() => {

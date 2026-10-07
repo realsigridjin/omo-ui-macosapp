@@ -1,0 +1,76 @@
+name: Windows checks and release
+
+on:
+  pull_request:
+    branches: [windows-support]
+  push:
+    branches: [windows-support]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    if: github.repository == 'JunesuChoi/omo-ui-windows'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:e2e
+      - name: Package Windows installer
+        run: npm run package:win -- --publish never
+      - name: Prepare release assets
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($version -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') { throw 'Invalid release version' }
+          $installer = Get-Item "release/OmO UI Windows Setup $version.exe"
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content release/SHA256SUMS -Encoding utf8NoBOM
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            release/OmO UI Windows Setup *.exe
+            release/SHA256SUMS
+          if-no-files-found: error
+
+  release:
+    needs: windows
+    if: github.repository == 'JunesuChoi/omo-ui-windows' && github.ref == 'refs/heads/windows-support' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: release
+      - name: Publish versioned Windows release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; bump package.json for another release."
+            exit 0
+          fi
+          args=()
+          if [[ "$version" == *-* ]]; then args+=(--prerelease); fi
+          gh release create "$tag" "release/OmO UI Windows Setup $version.exe" release/SHA256SUMS \
+            --target "$GITHUB_SHA" --title "OmO UI Windows $version" --generate-notes "${args[@]}"

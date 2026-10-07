@@ -23,6 +23,9 @@ describe("attachments", () => {
     const [sent] = messageInput("describe\nthis", ["/tmp/a.png", "/tmp/b c.png"]);
     expect(splitAttachments(sent?.type === "text" ? sent.text : "")).toEqual({ text: "describe\nthis", paths: ["/tmp/a.png", "/tmp/b c.png"] });
     expect(splitAttachments(`${ATTACHMENT_HEADER}\n- /tmp/a.png`)).toEqual({ text: "", paths: ["/tmp/a.png"] });
+    const windowsPaths = ["C:\\Users\\me\\My Shots\\a.png", "\\\\server\\share\\b.png"];
+    const [windows] = messageInput("Windows images", windowsPaths);
+    expect(splitAttachments(windows?.type === "text" ? windows.text : "")).toEqual({ text: "Windows images", paths: windowsPaths });
     for (const text of ["plain", `quote ${ATTACHMENT_HEADER}\n- /tmp/a.png`, `${ATTACHMENT_HEADER}\nnot a path`, `${ATTACHMENT_HEADER}`]) {
       expect(splitAttachments(text), text).toEqual({ text, paths: [] });
     }

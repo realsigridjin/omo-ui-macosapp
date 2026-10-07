@@ -75,7 +75,11 @@ describe("read-only native child work", () => {
     const { dir, agent, cwd, store } = await fixture();
     const outside = path.join(dir, "outside.json");
     await writeFile(outside, JSON.stringify(record("st_external", "root", "s1")));
-    await symlink(outside, path.join(store, "tasks", "external.json"));
+    if (process.platform === "win32") {
+      await symlink(dir, path.join(store, "tasks", "external.json"), "junction");
+    } else {
+      await symlink(outside, path.join(store, "tasks", "external.json"));
+    }
     expect(await loadTaskWork(agent, cwd, "root")).toEqual([]);
     await mkdir(path.join(agent, "sessions"), { recursive: true });
     await writeFile(path.join(store, "tasks", "host.json"), JSON.stringify({

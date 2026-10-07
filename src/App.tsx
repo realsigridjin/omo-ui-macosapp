@@ -16,6 +16,8 @@ import { AppFrame } from "./ui/shell/AppFrame";
 import { Sidebar } from "./ui/sidebar/Sidebar";
 import { applyThemePreference } from "./ui/theme";
 import { uiState, useUiState } from "./ui/ui-state";
+import { WorkspacePanel } from "./ui/workspace/WorkspacePanel";
+import { ProjectPickerHost } from "./ui/projects/ProjectPickerHost";
 
 function MainPane() {
   return (
@@ -28,12 +30,13 @@ function MainPane() {
 }
 
 const renderSidePanel = (placement: "docked" | "overlay") => <SidePanel placement={placement} />;
+const renderWorkspacePanel = (placement: "docked" | "overlay") => <WorkspacePanel placement={placement} onClose={() => uiState.setWorkspacePanelOpen(false)} />;
 
 function Shell() {
   const bridgeState = useAppSelector((state) => state.bridge?.state ?? null);
   const sidePanelOpen = useAppSelector((state) => state.btw.open);
   useSidePanelShortcut();
-  const { sidebarVisible, sidebarWidth } = useUiState();
+  const { sidebarVisible, sidebarWidth, workspacePanelOpen } = useUiState();
   const newSession = useNewSessionFlow();
 
   useEffect(() => {
@@ -76,10 +79,11 @@ function Shell() {
         sidebarVisible={sidebarVisible}
         sidebarWidth={sidebarWidth}
         onSidebarWidthChange={uiState.setSidebarWidth}
-        rightPanel={sidePanelOpen ? renderSidePanel : null}
-        rightPanelWidth={SIDE_PANEL_WIDTH}
+        rightPanel={workspacePanelOpen ? renderWorkspacePanel : sidePanelOpen ? renderSidePanel : null}
+        rightPanelWidth={workspacePanelOpen ? 440 : SIDE_PANEL_WIDTH}
       />
       <SettingsDialog />
+      <ProjectPickerHost />
       <NoticeToasts />
     </>
   );
@@ -106,12 +110,12 @@ export function App() {
   }, []);
 
   const models = useSyncExternalStore(store.subscribe, () => store.getState().models);
+  const profile = useSyncExternalStore(store.subscribe, () => store.getState().composer.profile);
   useEffect(() => {
-    const profile = store.getState().composer.profile;
     if (!profile || models.length === 0) return;
-    const resolved = resolveProfile(models, profile);
+    const resolved = resolveProfile(models, profile, preferences?.profileModels);
     store.dispatch({ type: "composer/modelSelected", modelId: resolved.model?.id ?? null, effort: resolved.effort, profile });
-  }, [models, store, preferences?.modelProfile]);
+  }, [models, store, profile, preferences?.profileModels]);
 
   const theme = preferences?.theme ?? "system";
   useEffect(() => applyThemePreference(theme), [theme]);

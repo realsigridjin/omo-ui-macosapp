@@ -186,7 +186,7 @@ describe("installation token", () => {
       expect(token).toMatch(/^[0-9a-f]{64}$/);
       expect(loadIphoneToken(dir)).toBe(token);
       expect(JSON.parse(readFileSync(path.join(dir, "iphone-token.json"), "utf8"))).toEqual({ token });
-      expect(statSync(path.join(dir, "iphone-token.json")).mode & 0o777).toBe(0o600);
+      if (process.platform !== "win32") expect(statSync(path.join(dir, "iphone-token.json")).mode & 0o777).toBe(0o600);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });

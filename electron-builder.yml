@@ -1,6 +1,6 @@
-appId: com.sigridjineth.omoui
-productName: OmO UI
-copyright: Copyright © 2026 sigridjineth
+appId: io.github.junesuchoi.omoui.windows
+productName: OmO UI Windows
+copyright: Copyright © 2026 sigridjineth; Windows modifications by JunesuChoi
 directories:
   output: release
   buildResources: build
@@ -12,6 +12,8 @@ files:
 asar: true
 # The DSH MIT notice and the font license ship with every copy of the app (Contents/Resources).
 extraResources:
+  - from: build/icon.png
+    to: icon.png
   - from: NOTICE
     to: NOTICE
   - from: LICENSE
@@ -36,3 +38,13 @@ mac:
     LSMinimumSystemVersion: "12.0"
 dmg:
   title: OmO UI
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

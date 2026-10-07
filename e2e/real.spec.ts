@@ -1,9 +1,11 @@
 import { mkdirSync, realpathSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { TESTID } from "../src/ui/testids.ts";
 import { byTestId, launchApp, newSession, send, setTheme, shot, tempDir, threadRow, type LaunchedApp } from "./helpers.ts";
 
-const WORKSPACE = "/tmp/omo-ui-qa/ws1";
+const WORKSPACE = path.join(tmpdir(), "omo-ui-qa", "ws1");
 const MODEL_TIMEOUT_MS = 180_000;
 const RECONNECT_TIMEOUT_MS = 30_000;
 

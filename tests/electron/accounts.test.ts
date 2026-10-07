@@ -102,7 +102,21 @@ describe("login", () => {
     await openLogin("/bin/omo", "kimi-coding", async (file: string, args: string[]) => {
       calls.push([file, args]);
       return { stdout: "", stderr: "" };
-    });
+    }, "darwin");
     expect(calls).toEqual([["/usr/bin/osascript", ["-e", loginScript("/bin/omo", "kimi-coding")]]]);
+  });
+
+  it("opens an interactive Windows console with an encoded command and a literal executable path", async () => {
+    const calls: Array<[string, string[]]> = [];
+    await openLogin("C:\\Users\\it's $me & more\\omo.exe", "chatgpt-subscription", async (file, args) => {
+      calls.push([file, args]);
+    }, "win32");
+    expect(calls[0]?.[0]).toBe("powershell.exe");
+    expect(calls[0]?.[1].slice(0, -1)).toEqual(["-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand"]);
+    const launcher = Buffer.from(calls[0]?.[1].at(-1) ?? "", "base64").toString("utf16le");
+    expect(launcher).toContain("Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe')");
+    expect(launcher).toContain("-NoExit -EncodedCommand");
+    const encoded = /-EncodedCommand ([A-Za-z0-9+/=]+)'$/.exec(launcher)?.[1] ?? "";
+    expect(Buffer.from(encoded, "base64").toString("utf16le")).toBe("Set-Location -LiteralPath $HOME; & 'C:\\Users\\it''s $me & more\\omo.exe' '/gpt-account add'");
   });
 });

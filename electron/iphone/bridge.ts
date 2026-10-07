@@ -53,7 +53,7 @@ export class IphoneBridge {
   private stopped = true;
   /** omo server requests not yet answered, replayed to a phone that connects while they wait. */
   private readonly pending = new Map<RequestId, RpcServerRequest>();
-  constructor(private readonly supervisor: Pick<OmoSupervisor, "getStatus" | "onStatus" | "onNotification" | "onServerRequest" | "request" | "respond">, private readonly mux = new Usbmux(), private readonly enabled = process.env["OMO_UI_IPHONE_BRIDGE"] !== "0", private readonly token = randomBytes(32).toString("hex")) {}
+  constructor(private readonly supervisor: Pick<OmoSupervisor, "getStatus" | "onStatus" | "onNotification" | "onServerRequest" | "request" | "respond">, private readonly mux = new Usbmux(), private readonly enabled = process.platform === "darwin" && process.env["OMO_UI_IPHONE_BRIDGE"] !== "0", private readonly token = randomBytes(32).toString("hex")) {}
   getStatus(): IphoneStatus { const devices = [...this.devices.values()].map((link) => ({ ...link.device, state: link.socket ? "connected" as const : "connecting" as const, pendingApproval: !!link.socket && this.pending.size > 0 })); return { enabled: this.enabled, state: devices.some((d) => d.state === "connected") ? "connected" : devices.length ? "connecting" : "searching", devices }; }
   onStatus(listener: (status: IphoneStatus) => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   private publish(): void { for (const listener of this.listeners) listener(this.getStatus()); }

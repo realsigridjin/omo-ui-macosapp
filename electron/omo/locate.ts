@@ -55,20 +55,24 @@ async function candidates(options: LocateOptions, tried: LocateProblem[]): Promi
   const list: Candidate[] = [];
   const fromInstall = await installJsonCandidate(options.homeDir, tried);
   if (fromInstall) list.push(fromInstall);
-  list.push({ source: "local-bin", path: path.join(options.homeDir, ".local", "bin", "omo") });
-  for (const dir of (options.loginPath ?? "").split(path.delimiter)) {
-    if (path.isAbsolute(dir)) list.push({ source: "login-path", path: path.join(dir, "omo") });
+  const windows = process.platform === "win32";
+  const binaryName = windows ? "omo.exe" : "omo";
+  const envPath = windows ? Object.entries(options.env).find(([key]) => key.toUpperCase() === "PATH")?.[1] : undefined;
+  list.push({ source: "local-bin", path: path.join(options.homeDir, ".local", "bin", binaryName) });
+  for (const dir of (options.loginPath ?? envPath ?? "").split(windows ? ";" : path.delimiter)) {
+    if (path.isAbsolute(dir)) list.push({ source: "login-path", path: path.join(dir, binaryName) });
   }
   return list;
 }
 
-function readVersion(file: string, options: LocateOptions): Promise<{ version: string } | { problem: string }> {
+function readVersion(candidate: Candidate, options: LocateOptions): Promise<{ version: string } | { problem: string }> {
   const timeoutMs = options.versionTimeoutMs ?? 10_000;
+  const nodeOverride = process.platform === "win32" && candidate.source === "override" && path.extname(candidate.path).toLowerCase() === ".mjs";
   return new Promise((resolve) => {
     execFile(
-      file,
-      ["--version"],
-      { env: options.env, timeout: timeoutMs, killSignal: "SIGKILL", encoding: "utf8" },
+      nodeOverride ? process.execPath : candidate.path,
+      nodeOverride ? [candidate.path, "--version"] : ["--version"],
+      { env: nodeOverride ? { ...options.env, ELECTRON_RUN_AS_NODE: "1" } : options.env, timeout: timeoutMs, killSignal: "SIGKILL", encoding: "utf8" },
       (error, stdout) => {
         if (error) {
           const problem = error.killed
@@ -95,7 +99,7 @@ async function check(candidate: Candidate, options: LocateOptions): Promise<OmoB
   } catch (error) {
     return `not executable: ${errorText(error)}`;
   }
-  const version = await readVersion(candidate.path, options);
+  const version = await readVersion(candidate, options);
   if ("problem" in version) return version.problem;
   return { path: candidate.path, version: version.version, source: candidate.source };
 }

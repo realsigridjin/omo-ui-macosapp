@@ -23,7 +23,8 @@ test("a native quit request exits the app while omo is not found", async () => {
       deadline = setTimeout(() => resolve("running"), EXIT_TIMEOUT_MS);
     });
     // SIGTERM enters Electron's Browser::Quit from a native task, as Cmd+Q and the Dock's Quit item do.
-    main.kill("SIGTERM");
+    if (process.platform === "win32") await launched.app.evaluate(({ app }) => app.quit());
+    else main.kill("SIGTERM");
     const outcome = await Promise.race([exited, running]);
     clearTimeout(deadline);
     expect(outcome).toBe("exited");

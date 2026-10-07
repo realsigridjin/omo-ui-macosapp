@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { OMO_INSTALL_SCRIPT_URL } from "../../shared/ipc";
+import { OMO_INSTALL_SCRIPT_URL, OMO_WINDOWS_INSTALL_SCRIPT_URL } from "../../shared/ipc";
 import type { OmoBinary, OmoUpdateStatus } from "../../shared/ipc";
 import { AppServerClient } from "../../electron/omo/app-server-client";
 import type { SpawnImpl } from "../../electron/omo/app-server-client";
@@ -39,7 +39,7 @@ describe("compareVersions", () => {
 });
 
 describe("autoUpdateOmo", () => {
-  async function update(outputs: readonly (string | Error)[], enabled = true) {
+  async function update(outputs: readonly (string | Error)[], enabled = true, platform: NodeJS.Platform = "darwin", located = binary) {
     const calls: UpdateCommand[] = [];
     const states: OmoUpdateStatus[] = [];
     const run: UpdateCommandRunner = async (command) => {
@@ -49,7 +49,7 @@ describe("autoUpdateOmo", () => {
       if (output === undefined) throw new Error("unexpected command");
       return output;
     };
-    const result = await autoUpdateOmo(binary, { HOME: "/fake" }, { enabled: () => enabled, run },
+    const result = await autoUpdateOmo(located, { HOME: "/fake" }, { enabled: () => enabled, run, platform },
       new AbortController().signal, (status) => states.push(status));
     return { calls, states, result };
   }
@@ -70,6 +70,21 @@ describe("autoUpdateOmo", () => {
     const result = await update([], false);
     expect(result.calls).toEqual([]);
     expect(result.states).toEqual([{ state: "disabled" }]);
+  });
+  it("pins the Windows official installer to the checked version and the located omo.exe directory", async () => {
+    const located = { ...binary, path: "C:\\Users\\it's me\\bin\\omo.exe" };
+    const { calls, states, result } = await update([available, "", "omo 5.1.5"], true, "win32", located);
+    expect(calls[1]).toMatchObject({
+      command: "powershell.exe", platform: "win32", timeoutMs: 120_000,
+      env: { OMO_INSTALL_DIR: "C:\\Users\\it's me\\bin", OMO_NO_MODIFY_PATH: "1" },
+    });
+    const program = Buffer.from(calls[1]?.args.at(-1) ?? "", "base64").toString("utf16le");
+    expect(program).toContain(OMO_WINDOWS_INSTALL_SCRIPT_URL);
+    expect(program).toContain("'5.1.5'");
+    expect(program).not.toContain("not executable");
+    expect(calls[2]?.command).toBe(located.path);
+    expect(result).toEqual({ ...located, version: "5.1.5" });
+    expect(states.at(-1)).toEqual({ state: "updated", from: "5.1.4", to: "5.1.5" });
   });
   it.each([
     "omo 5.1.4 is the newest stable release",
@@ -92,6 +107,23 @@ describe("autoUpdateOmo", () => {
 });
 
 describe("startup with real fake command processes", () => {
+  it("runs an explicit Windows mjs updater with the Node runtime and its original arguments", async () => {
+    const home = await mkdtemp(path.join(os.tmpdir(), "omo-ui-update-mjs-"));
+    dirs.push(home);
+    const calls: Array<{ command: string; args: readonly string[]; env: NodeJS.ProcessEnv | undefined }> = [];
+    const spawnImpl: SpawnImpl = (command, args, options) => {
+      calls.push({ command, args, env: options.env });
+      return spawn(command, args, options);
+    };
+    const output = await runUpdateCommand({ command: fixture, args: ["update", "--dry-run"],
+      env: { ...process.env, FAKE_UPDATE_HOME: home, FAKE_UPDATE_MODE: "current" },
+      timeoutMs: 20_000, signal: new AbortController().signal, platform: "win32" }, spawnImpl);
+    expect(output).toBe("omo 5.1.4 is the newest stable release");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({ command: process.execPath, args: [fixture, "update", "--dry-run"], env: { ELECTRON_RUN_AS_NODE: "1" } });
+    expect(await readFile(path.join(home, "update.log"), "utf8")).toBe("check\n");
+  });
+
   async function setup(mode: string, enabled = true) {
     const home = await mkdtemp(path.join(os.tmpdir(), "omo-ui-update-"));
     dirs.push(home);
@@ -114,13 +146,13 @@ describe("startup with real fake command processes", () => {
       return child;
     };
     const run: UpdateCommandRunner = (command) => runUpdateCommand(
-      { ...command, args: command.command === "/bin/bash" ? ["install"] : command.args },
+      { ...command, args: command.command === "/bin/bash" || command.command === "powershell.exe" ? ["install"] : command.args },
       fakeSpawn,
     );
     const supervisor = new OmoSupervisor({
       homeDir: home, baseEnv: env, clientVersion: "test",
       resolveEnv: async () => ({ env, fromLoginShell: false }),
-      locate: async () => ({ ok: true, binary: { ...binary, path: path.join(home, "omo") } }),
+      locate: async () => ({ ok: true, binary: { ...binary, path: path.join(home, process.platform === "win32" ? "omo.exe" : "omo") } }),
       autoUpdate: { enabled: () => enabled, run },
       createClient: (options) => new AppServerClient({ ...options, spawnImpl: fakeSpawn }),
     });

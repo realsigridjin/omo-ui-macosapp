@@ -46,6 +46,34 @@ describe("profile lanes", () => {
     const entry = model("opaque", "Claude Fable 5.1");
     expect(resolveProfile([entry], "daily-heavy").model).toBe(entry);
   });
+  it.each(PROFILE_LANES)("uses the configured model for $id with the lane effort", (lane) => {
+    const custom = model("custom", "Custom", ["low", "high"]);
+    const models = [...catalog, custom];
+    expect(resolveProfile(models, lane.id, { [lane.id]: custom.id })).toEqual({
+      model: custom,
+      effort: lane.weight === "heavy" ? "high" : "low",
+    });
+    expect(resolveProfile(models, lane.id, {})).toEqual(resolveProfile(models, lane.id));
+  });
+  it("uses Automatic when the configured model is unavailable and keeps other lanes independent", () => {
+    const hidden = { ...model("hidden"), hidden: true };
+    const models = [...catalog, hidden];
+    for (const id of ["missing", hidden.id]) {
+      expect(resolveProfile(models, "daily-normal", { "daily-normal": id })).toEqual(
+        resolveProfile(models, "daily-normal"),
+      );
+    }
+    expect(resolveProfile(models, "geeky-normal", { "daily-normal": catalog[2]!.id })).toEqual(
+      resolveProfile(models, "geeky-normal"),
+    );
+  });
+  it("supports custom models without reasoning effort", () => {
+    const custom = model("custom", undefined, []);
+    expect(resolveProfile([...catalog, custom], "daily-heavy", { "daily-heavy": custom.id })).toEqual({
+      model: custom,
+      effort: null,
+    });
+  });
   it("prefers the nearest named family, then provider family", () => {
     const opus = model("claude-opus-4");
     const other = model("claude-sonnet-5");

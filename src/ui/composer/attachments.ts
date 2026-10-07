@@ -30,7 +30,7 @@ export function splitAttachments(text: string): { text: string; paths: string[] 
   const index = text.lastIndexOf(ATTACHMENT_HEADER);
   if (index < 0 || (index > 0 && text[index - 1] !== "\n")) return { text, paths: [] };
   const lines = text.slice(index + ATTACHMENT_HEADER.length).split("\n").filter((line) => line !== "");
-  if (lines.length === 0 || !lines.every((line) => line.startsWith("- /"))) return { text, paths: [] };
+  if (lines.length === 0 || !lines.every((line) => /^- (?:\/|[A-Za-z]:[\\/]|\\\\)/.test(line))) return { text, paths: [] };
   return { text: text.slice(0, index).replace(/\n+$/, ""), paths: lines.map((line) => line.slice(2)) };
 }
 

@@ -16,7 +16,12 @@ export interface UserImage {
 export const NO_IMAGES: readonly UserImage[] = [];
 
 function fileUrl(path: string): string {
-  return `file://${path.split("/").map(encodeURIComponent).join("/")}`;
+  const normalized = path.replaceAll("\\", "/");
+  if (/^[A-Za-z]:\//.test(normalized)) {
+    return `file:///${normalized.slice(0, 2)}${normalized.slice(2).split("/").map(encodeURIComponent).join("/")}`;
+  }
+  if (normalized.startsWith("//")) return `file:${normalized.split("/").map(encodeURIComponent).join("/")}`;
+  return `file://${normalized.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 /**

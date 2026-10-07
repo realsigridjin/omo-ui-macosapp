@@ -1,0 +1,195 @@
+/* The picker rides the DSH Modal chrome (header, description, footer); this module widens the card and styles its
+   rows. Rows take their type and hover fill from the sidebar's rows (Rows.module.css) and their selected fill from
+   the settings nav (SettingsDialog.module.css), the other selectable list on a dialog surface. */
+
+.card {
+  width: min(480px, 100%);
+  max-height: 100%;
+  color: var(--dsw-alias-label-primary);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+/* Modal's scrollable content region: in a window too short for the card, header and rows scroll and the footer stays. */
+.content {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Rows bleed into the body's 24px gutter so their badges line up with the dialog title. */
+.picker {
+  --dsh-project-row-height: 52px;
+  --dsh-project-row-gap: 2px;
+  --dsh-project-bleed: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Five whole rows, then the list scrolls. The scrollbar gutter sits past the rows' right edge, which keeps them
+   level with the New project row whether or not the list scrolls. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dsh-project-row-gap);
+  max-height: calc(5 * var(--dsh-project-row-height) + 4 * var(--dsh-project-row-gap));
+  margin: 0 calc(-1 * var(--dsh-project-bleed) - var(--dsh-scrollbar-width) - 1px) 0 calc(-1 * var(--dsh-project-bleed));
+  padding-right: 1px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.row {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--dsh-project-row-height);
+  padding: 0 var(--dsh-project-bleed);
+  box-sizing: border-box;
+  border-radius: var(--dsw-radius-md);
+  cursor: pointer;
+  user-select: none;
+}
+
+.row:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.row.selected {
+  background: var(--dsw-specific-sidebar-nav-item-active);
+}
+
+/* The ring belongs to the row because its radio is invisible; focus placed by the dialog on open stays ringless,
+   like every automatic focus (base.css). */
+.row:has(.radio:focus-visible:not([data-dsh-automatic-focus])) {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* The native radio covers its row: it supplies arrow-key selection and the checked state, the row paints them. */
+.radio {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.badge {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--dsw-radius-sm);
+  font-size: 11px;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+/* Cut at its start, so the folders nearest the project stay visible: the box runs right-to-left only to put the
+   ellipsis on that side, and the path inside it keeps its own left-to-right order (the <bdi>). */
+.path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.meta {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+}
+
+.check {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+/* The sidebar's dashed New project control, at row size. */
+.newProject {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--dsh-project-row-height);
+  margin: 0 calc(-1 * var(--dsh-project-bleed));
+  padding: 0 calc(var(--dsh-project-bleed) - 1px);
+  box-sizing: border-box;
+  border: 1px dashed var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.newProject:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.newProject:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.newIcon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.hint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.status {
+  flex: 1;
+  min-width: 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.action {
+  flex: none;
+  min-width: 72px;
+}

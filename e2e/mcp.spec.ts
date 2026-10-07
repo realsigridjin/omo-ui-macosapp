@@ -1,7 +1,27 @@
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { TESTID } from "../src/ui/testids.ts";
 import { byTestId, launchApp, setTheme, shot, tempDir } from "./helpers.ts";
+
+test("imports MCP JSON through the native file picker without replacing existing servers", async () => {
+  const home = tempDir("mcp-import");
+  const source = path.join(home, "source.json");
+  writeFileSync(source, JSON.stringify({ mcpServers: { imported: { command: "node", args: ["server.mjs"], env: { KEEP: "value" } } } }));
+  const running = await launchApp({ omo: "fake", fakeHome: home });
+  try {
+    await running.app.evaluate(({ dialog }, selected) => {
+      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [selected] });
+    }, source);
+    await byTestId(running.page, TESTID.openSettings).click();
+    await running.page.locator('[data-section="mcp"]').click();
+    await running.page.getByTestId("mcp-import").click();
+    await expect(running.page.getByTestId("mcp-import-status")).toContainText("1");
+    await expect(running.page.locator("html")).toHaveAttribute("data-bridge-state", "connected");
+    await expect(running.page.locator('[data-testid="mcp-configured-server"][data-server-name="imported"]')).toBeVisible();
+    expect(JSON.parse(readFileSync(path.join(home, "mcp.json"), "utf8"))).toMatchObject({ mcpServers: { imported: { command: "node", args: ["server.mjs"] } } });
+  } finally { await running.close(); rmSync(home, { recursive: true, force: true }); }
+});
 
 for (const theme of ["light", "dark"] as const) {
   test(`MCP inventory, tools, refresh and notification (${theme})`, async () => {

@@ -58,6 +58,39 @@ describe("PreferencesStore", () => {
     expect(next.recentWorkspaces).toEqual(many.slice(0, 10));
   });
 
+  it("persists each profile's model independently and restores Automatic by omitting an entry", () => {
+    const store = new PreferencesStore(dir);
+    expect(store.get().profileModels).toBeUndefined();
+    const profileModels = {
+      "daily-normal": "opus",
+      "daily-heavy": "fable",
+      "geeky-normal": "sol",
+      "geeky-heavy": "astra",
+    };
+    expect(store.set({ profileModels }).profileModels).toEqual(profileModels);
+    expect(store.set({ theme: "dark" }).profileModels).toEqual(profileModels);
+    expect(new PreferencesStore(dir).get().profileModels).toEqual(profileModels);
+    expect(store.set({ profileModels: { "daily-heavy": "custom" } }).profileModels).toEqual({ "daily-heavy": "custom" });
+    expect(new PreferencesStore(dir).get().profileModels).toEqual({ "daily-heavy": "custom" });
+    expect(store.set({ profileModels: {} }).profileModels).toEqual({});
+    expect(new PreferencesStore(dir).get().profileModels).toEqual({});
+  });
+
+  it("rejects invalid profile-model maps and entries at the IPC boundary", () => {
+    const store = new PreferencesStore(dir);
+    store.set({ profileModels: { "daily-heavy": "custom" } });
+    for (const profileModels of [null, [], "custom", 42]) {
+      expect(store.set({ profileModels }).profileModels).toEqual({ "daily-heavy": "custom" });
+    }
+    expect(store.set({ profileModels: {
+      "daily-heavy": "  ", "daily-normal": 42, "geeky-normal": null,
+      "geeky-heavy": "astra", unknown: "custom",
+    } }).profileModels).toEqual({ "daily-heavy": "custom", "geeky-heavy": "astra" });
+    expect(store.set({ profileModels: { "daily-heavy": "", "geeky-heavy": false } }).profileModels).toEqual({
+      "daily-heavy": "custom", "geeky-heavy": "astra",
+    });
+  });
+
   it("persists atomically so a new store reads the saved values", async () => {
     new PreferencesStore(dir).set({ theme: "light", locale: "ko", lastWorkspace: "/repo", modelId: null });
     expect(await readdir(dir)).toEqual(["preferences.json"]);

@@ -159,9 +159,9 @@ test("closing and reopening the panel restores the side chats; ⌘E toggles it",
   await expect(panel(page)).toBeVisible();
   await expect(byTestId(page, TESTID.sidePicker)).toContainText("BTW #1");
   await expect(sideQuestions(page).first()).toHaveText("what changed?");
-  await page.keyboard.press("Meta+e");
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+e" : "Control+e");
   await expect(panel(page)).toBeHidden();
-  await page.keyboard.press("Meta+e");
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+e" : "Control+e");
   await expect(panel(page)).toBeVisible();
   await expect(sideTurns(page)).toHaveCount(2);
 });

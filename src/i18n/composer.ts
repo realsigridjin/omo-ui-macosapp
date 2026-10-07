@@ -1,5 +1,7 @@
 export const messages = {
   en: {
+    "composer.profile.model": "Choose profile model",
+    "composer.profile.automatic": "Automatic",
     "composer.profile.tab": "Profile",
     "composer.profile.specific": "Specific model",
     "composer.profile.daily": "Daily",
@@ -38,7 +40,7 @@ export const messages = {
     "composer.workspace.label": "Workspace: {path}",
     "composer.keyword.hint": ": OmO keeps working until the task is done.",
     "composer.fullAccess.label": "Full access",
-    "composer.fullAccess.tooltip": "omo runs with full access to this Mac. Approval prompts come from omo itself.",
+    "composer.fullAccess.tooltip": "omo runs with full access to this computer. Approval prompts come from omo itself.",
     "composer.model.label": "Model",
     "composer.model.aria": "Model: {model}",
     "composer.model.ariaEffort": "Model: {model}, reasoning effort {effort}",
@@ -74,6 +76,8 @@ export const messages = {
     "composer.skills.scope.admin": "Admin",
   },
   ko: {
+    "composer.profile.model": "프로필 모델 선택",
+    "composer.profile.automatic": "자동 선택",
     "composer.profile.tab": "프로필",
     "composer.profile.specific": "모델 직접 선택",
     "composer.profile.daily": "일상",
@@ -112,7 +116,7 @@ export const messages = {
     "composer.workspace.label": "작업 폴더: {path}",
     "composer.keyword.hint": ": 작업이 끝날 때까지 OmO가 계속 일합니다.",
     "composer.fullAccess.label": "전체 접근",
-    "composer.fullAccess.tooltip": "omo는 이 Mac에 전체 접근 권한으로 실행됩니다. 승인 요청은 omo가 직접 보냅니다.",
+    "composer.fullAccess.tooltip": "omo는 이 컴퓨터에 전체 접근 권한으로 실행됩니다. 승인 요청은 omo가 직접 보냅니다.",
     "composer.model.label": "모델",
     "composer.model.aria": "모델: {model}",
     "composer.model.ariaEffort": "모델: {model}, 추론 강도 {effort}",

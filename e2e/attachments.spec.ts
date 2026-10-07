@@ -53,7 +53,7 @@ test("paste and drop preview, remove, and send image-only", async () => {
     await byTestId(page, TESTID.composerSend).click();
     await expect(byTestId(page, TESTID.userMessage).locator("img")).toBeVisible();
     const request = readFakeLog().find((entry) => entry["method"] === "turn/start");
-    expect(request).toMatchObject({ params: { input: [{ type: "text", text: expect.stringMatching(new RegExp(`^${ATTACHMENT_HEADER.replace(/[()]/g, "\\$&")}\\n- /.+/attachments/[0-9a-f-]+\\.png$`)) }] } });
+    expect(request).toMatchObject({ params: { input: [{ type: "text", text: expect.stringMatching(new RegExp(`^${ATTACHMENT_HEADER.replace(/[()]/g, "\\$&")}\\n- .+[\\\\/]attachments[\\\\/][0-9a-f-]+\\.png$`)) }] } });
     const saved = String((request?.["params"] as { input: { text: string }[] }).input[0]?.text).split("\n- ")[1] ?? "";
     expect(readFileSync(saved).equals(Buffer.from(PNG, "base64"))).toBe(true);
     await expect(byTestId(page, TESTID.userMessage).locator("img")).toHaveJSProperty("complete", true);

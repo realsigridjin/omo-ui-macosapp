@@ -2,16 +2,15 @@
   <img src="build/icon.png" width="112" alt="OmO UI app icon">
 </p>
 
-<h1 align="center">OmO UI</h1>
+<h1 align="center">OmO UI Windows</h1>
 
 <p align="center">
-  <b>A native macOS app for <a href="https://get.omo.dev">omo</a>, the coding agent.</b><br>
+  <b>A Windows x64 desktop fork for <a href="https://get.omo.dev">omo</a>, the coding agent.</b><br>
   Skills on <code>/</code>, parallel agents you can watch, todos and goals, and an Aside-style side chat, in one window.
 </p>
 
 <p align="center">
-  <img alt="macOS 12 or later" src="https://img.shields.io/badge/macOS-12%2B-111111?logo=apple&logoColor=white">
-  <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-arm64-111111">
+  <img alt="Windows x64" src="https://img.shields.io/badge/Windows-x64-0078D4">
   <img alt="Electron 44" src="https://img.shields.io/badge/Electron-44-47848F?logo=electron&logoColor=white">
   <img alt="Drives omo app-server" src="https://img.shields.io/badge/omo-app--server-22c55e">
   <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3b82f6">
@@ -30,7 +29,9 @@
   <img alt="OmO UI running a ulw-loop session: tool cards, a table of two running agent lanes, the todo list and goal above the composer, and a /btw side chat answering in the right panel" src="docs/media/hero-light.png">
 </picture>
 
-OmO UI runs the omo you installed with `curl -fsSL https://get.omo.dev/install.sh | bash`. It starts `omo app-server` with your login-shell environment, so it uses the same sessions, skills, models and credentials as omo in your terminal. The interface comes from the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) web GUI (MIT), restyled and rewired for omo.
+Maintained by [JunesuChoi](https://github.com/JunesuChoi), this Windows fork is based on [realsigridjin/omo-ui-macosapp](https://github.com/realsigridjin/omo-ui-macosapp), copyright sigridjineth. The original MIT license, DeepSeek notices and font licenses are preserved. This is an independent Windows distribution, not an official upstream release. macOS and iOS source is retained from upstream but is not a supported or device-tested target of this fork. Existing tour images below are upstream screenshots, not Windows release evidence.
+
+OmO UI Windows runs the omo installed with `irm https://get.omo.dev/install.ps1 | iex` or an existing `omo.exe`. It starts `omo app-server` with the inherited Windows environment, using the same sessions, skills, models and credentials as omo in your terminal. The interface comes from the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) web GUI (MIT).
 
 On each app launch, automatic updates check native omo with `omo update --dry-run` before starting the app server. The compiled updater prints replacement instructions rather than installing, so OmO UI runs the [official installer](https://get.omo.dev/install.sh) for the reported version in the located launcher's directory; it verifies SHA-256 and replaces the executable atomically without editing shell profiles or removing other installs. The check is limited to 20 seconds, installation to 120 seconds, and version verification to 20 seconds. Offline, timeout, unsupported installations, and other failures leave startup enabled with a notice in Settings > omo. The window opens immediately; no running app server is interrupted by an update. Settings > omo shows the result and an automatic-update toggle (on by default, changes apply on the next app launch). Crash recovery and the Restart omo button do not repeat the update.
 
@@ -47,6 +48,59 @@ OmO for iPhone can control this Mac's omo over a USB cable: install the iPhone a
 - **Light, dark, English and Korean.**
 
 [OmO for iPhone](ios/README.md) is the native SwiftUI companion: connect your iPhone to the Mac with a USB cable to browse sessions, stream replies, send or steer omo, stop a turn, and answer approvals and questions. The Mac keeps running omo and holding its credentials; the phone communicates through Apple's USB multiplexer, not Wi-Fi or Bluetooth. iOS suspends the app in the background, so keep it open while you use it. See the iOS guide for building, signing, installing, and the 7-day renewal of free provisioning.
+
+## Windows
+
+Requires Windows x64 and Node.js 22 or later for development. Install omo with the official PowerShell installer, or use your existing `omo.exe` installation:
+
+```powershell
+irm https://get.omo.dev/install.ps1 | iex
+npm ci
+npm run dev
+```
+
+Build and package from the repository directory:
+
+```powershell
+npm run typecheck
+npm test
+npm run test:e2e
+npm run package:win
+```
+
+The installer is `release/OmO UI Windows Setup 0.1.4-win.4.exe`; the runnable directory is `release/win-unpacked`. `npm run package:win:dir` builds only the runnable directory. The app discovers omo using `OMO_UI_OMO_BIN`, `~/.omo/install.json`, `~/.local/bin/omo.exe`, then PATH. It uses the inherited Windows environment, PowerShell for installation and account login, and the native Windows title bar. Use Ctrl+E for side chat. The file manager target opens Explorer; standard installed VS Code and Cursor executables are detected. The fork has a distinct app identity and stores its UI preferences separately from the original OmO UI; omo's agent configuration remains shared.
+
+### App updates
+
+This fork's Windows checks and release workflow runs on PRs to `windows-support`. Merging a version bump into that branch builds and publishes `v<version>` with the Windows installer and `SHA256SUMS`; existing releases are not overwritten. A manual Actions run on `windows-support` can publish the current version after checks. PR runs do not publish releases.
+
+Settings > About > Windows app update checks this fork's GitHub releases, including Windows prereleases. A newer release with a Windows installer and SHA-256 digest enables Download and install. The installer is downloaded and verified before opening; the app then closes so installation can continue. Finish active turns first. Checking never installs automatically. When no release has been published, the UI reports that explicitly. This updates the desktop app, not the separate omo runtime.
+
+Release assets must include `OmO UI Windows Setup <version>.exe` (GitHub stores it as `OmO.UI.Windows.Setup.<version>.exe`) with GitHub's `sha256` asset digest or a `SHA256SUMS` file naming that exact installer. Source pushes alone are not app update releases.
+
+iPhone USB control is macOS-only and is disabled with an explanatory status on Windows. macOS build commands remain available. Windows packages are not configured with a publisher signing certificate.
+
+### Profiles, MCP and Android
+
+The Windows interface also provides full-window searchable settings, a recent-project chooser, a read-only workspace file/diff panel, and a Devices & memory overview. The overview reads this PC's actual app/runtime versions, selected Android connection and local memory Git repository state. It does not represent a cloud subscription, remote-device inventory or verified cloud synchronization.
+
+The composer's Profile tab allows a custom model for each Daily/Geeky, Normal/Heavy profile. Automatic keeps the built-in model matching. Preferences retain these choices between app launches.
+
+Settings > Models also edits native omo research agents (`explore`, `librarian` and existing custom agents), task/research categories and named model mappings. Enter `provider/model[:reasoning]` references in fallback order, one per line. Save and reconnect writes native `[senpi]` overrides in the existing user `~/.omo/omo.jsonc` or `omo.json`, keeping other fields and a first `.models.bak` backup. Project and active configuration profiles can override user settings. These are native omo routes, separate from composer profile preferences.
+
+Each route also offers a provider-grouped list of available models. Choose a model to append it to an agent/category fallback chain without duplicates, or replace a mapping target. You can still edit the references and reasoning suffixes directly.
+
+Settings > MCP > Import configuration accepts Claude/Cursor JSON files containing `mcpServers`. Existing server names are kept, new servers are added to omo's `mcp.json`, and omo reconnects. Finish active turns before importing. The selected source file is not changed.
+
+Import existing MCP servers discovers standard Claude/Cursor configurations. Manual import also accepts VS Code `servers`/`mcp.servers` and BOM-prefixed JSON. Native authentication and lifecycle fields are preserved. Saved server inventory is shown even before a workspace session loads; it is not labeled connected until omo reports a connection.
+
+Settings > Accounts displays read-only opencodex OAuth, Codex and API-key account labels from the registered local proxy. The local management token stays in Electron's main process and is never sent to remote proxies.
+
+Settings > Android uses Android platform-tools (`adb`). Enable USB debugging, authorize the computer, click Find devices and select a ready phone. The app creates an ADB reverse connection and opens a browser control page on that phone; no Android APK is needed. Already-paired wireless ADB also works. Disconnect revokes the browser connection. Windows shows Android instead of the unsupported iPhone section.
+
+### opencodex proxy
+
+Open **Settings > Runtime > opencodex**. Enter the OpenAI-compatible base URL, for example `http://127.0.0.1:10100/v1`. Enter an API key if the proxy requires one; leaving the field blank preserves an existing key. Click **Apply and reconnect** after active turns finish. The app reads `/models`, registers the proxy models and their supported reasoning levels in omo's `models.json`, preserves other providers, and reconnects omo. The key is never returned to the renderer. The proxy process must already be running; the app does not start or manage it.
 
 ## Feature tour
 
@@ -130,6 +184,8 @@ The same window on the installed omo with a real model, with the sidebar collaps
 </p>
 
 ## Install
+
+For this Windows fork, build with `npm ci` and `npm run package:win`, then run the generated Windows installer. Published Windows binaries belong in this fork's [Releases](https://github.com/JunesuChoi/omo-ui-windows/releases), not in Git source history. The following macOS instructions are retained for upstream reference only.
 
 Requirements: macOS 12 (Monterey) or later on Apple silicon, and omo from the official installer (`curl -fsSL https://get.omo.dev/install.sh | bash`). If omo is missing, the onboarding screen offers to run the installer. Building from source needs Node.js 22 or later and npm.
 

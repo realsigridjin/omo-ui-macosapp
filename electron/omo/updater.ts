@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
-import { OMO_INSTALL_SCRIPT_URL } from "../../shared/ipc";
+import { OMO_INSTALL_SCRIPT_URL, OMO_WINDOWS_INSTALL_SCRIPT_URL } from "../../shared/ipc";
 import type { OmoBinary, OmoUpdateStatus } from "../../shared/ipc";
 import type { SpawnImpl } from "./app-server-client";
+import { killInstallerProcess, windowsInstallerArgs } from "./installer";
 
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const OUTPUT_LIMIT = 16_384;
@@ -46,21 +47,29 @@ export interface UpdateCommand {
   readonly env: Record<string, string>;
   readonly timeoutMs: number;
   readonly signal: AbortSignal;
+  readonly platform?: NodeJS.Platform;
 }
 
 export type UpdateCommandRunner = (command: UpdateCommand) => Promise<string>;
 
-/** Runs without a TTY or shell interpolation; timeout/cancellation kills the whole owned process group. */
+/** Runs without a TTY or shell interpolation; timeout/cancellation kills the whole owned process tree. */
 export function runUpdateCommand(options: UpdateCommand, spawnImpl: SpawnImpl = spawn): Promise<string> {
   return new Promise((resolve, reject) => {
     if (options.signal.aborted) {
       reject(new Error("omo update cancelled"));
       return;
     }
-    const child = spawnImpl(options.command, [...options.args], { env: options.env, stdio: "pipe", detached: true });
+    const platform = options.platform ?? process.platform;
+    const nodeScript = platform === "win32" && /\.mjs$/i.test(options.command);
+    const child = spawnImpl(nodeScript ? process.execPath : options.command,
+      nodeScript ? [options.command, ...options.args] : [...options.args], {
+        env: nodeScript ? { ...options.env, ELECTRON_RUN_AS_NODE: "1" } : options.env,
+        stdio: "pipe", detached: platform !== "win32", windowsHide: true,
+      });
     let stdout = "";
     let stderr = "";
     let settled = false;
+    let terminating = false;
     const finish = (error?: Error): void => {
       if (settled) return;
       settled = true;
@@ -72,18 +81,10 @@ export function runUpdateCommand(options: UpdateCommand, spawnImpl: SpawnImpl = 
       else resolve(stdout.trim());
     };
     const kill = (message: string): void => {
-      if (child.pid !== undefined) {
-        try {
-          process.kill(-child.pid, "SIGKILL");
-        } catch (error) {
-          // An already-exited group needs no further termination.
-          if (!(error instanceof Error && "code" in error && error.code === "ESRCH")) {
-            finish(error instanceof Error ? error : new Error(String(error)));
-            return;
-          }
-        }
-      }
-      finish(new Error(message));
+      if (settled || terminating) return;
+      terminating = true;
+      void killInstallerProcess(child, platform).then(() => finish(new Error(message)),
+        (error: unknown) => finish(error instanceof Error ? error : new Error(String(error))));
     };
     const abort = (): void => kill("omo update cancelled");
     const timer = setTimeout(() => kill(`omo update timed out after ${options.timeoutMs} ms`), options.timeoutMs);
@@ -98,7 +99,9 @@ export function runUpdateCommand(options: UpdateCommand, spawnImpl: SpawnImpl = 
     });
     child.stderr.on("data", (text: string) => { stderr = (stderr + text).slice(-OUTPUT_LIMIT); });
     child.on("error", (error) => finish(error));
-    child.on("close", (code) => finish(code === 0 ? undefined : new Error(stderr.trim() || `omo update exited with code ${code}`)));
+    child.on("close", (code) => {
+      if (!terminating) finish(code === 0 ? undefined : new Error(stderr.trim() || `omo update exited with code ${code}`));
+    });
   });
 }
 
@@ -107,6 +110,7 @@ export interface AutoUpdateOptions {
   readonly run?: UpdateCommandRunner;
   readonly checkTimeoutMs?: number;
   readonly installTimeoutMs?: number;
+  readonly platform?: NodeJS.Platform;
 }
 
 const INSTALL_PROGRAM = [
@@ -132,8 +136,11 @@ export async function autoUpdateOmo(
     return binary;
   }
   const run = options.run ?? runUpdateCommand;
+  const platform = options.platform ?? process.platform;
+  const windows = platform === "win32";
+  const paths = windows ? path.win32 : path.posix;
   const command = (args: readonly string[], timeoutMs: number): UpdateCommand =>
-    ({ command: binary.path, args, env, timeoutMs, signal });
+    ({ command: binary.path, args, env, timeoutMs, signal, platform });
   try {
     onStatus({ state: "checking" });
     const output = await run(command(["update", "--dry-run"], options.checkTimeoutMs ?? 20_000));
@@ -151,14 +158,15 @@ export async function autoUpdateOmo(
       return binary;
     }
     if (signal.aborted) return binary;
-    if (path.basename(binary.path) !== "omo") throw new Error("Automatic installation requires a launcher named omo.");
+    if (paths.basename(binary.path).toLowerCase() !== (windows ? "omo.exe" : "omo")) throw new Error(`Automatic installation requires a launcher named ${windows ? "omo.exe" : "omo"}.`);
     onStatus({ state: "installing" });
     await run({
-      command: "/bin/bash",
-      args: ["-c", INSTALL_PROGRAM, "omo-update", OMO_INSTALL_SCRIPT_URL, target],
-      env: { ...env, OMO_INSTALL_DIR: path.dirname(binary.path), OMO_NO_MODIFY_PATH: "1" },
+      command: windows ? "powershell.exe" : "/bin/bash",
+      args: windows ? windowsInstallerArgs(OMO_WINDOWS_INSTALL_SCRIPT_URL, target) : ["-c", INSTALL_PROGRAM, "omo-update", OMO_INSTALL_SCRIPT_URL, target],
+      env: { ...env, OMO_INSTALL_DIR: paths.dirname(binary.path), OMO_NO_MODIFY_PATH: "1" },
       timeoutMs: options.installTimeoutMs ?? 120_000,
       signal,
+      platform,
     });
     const versionOutput = await run(command(["--version"], options.checkTimeoutMs ?? 20_000));
     const version = /^omo\s+(\S+)/.exec(versionOutput)?.[1] ?? "";

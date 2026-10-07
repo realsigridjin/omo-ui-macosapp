@@ -24,6 +24,10 @@ const TARGET_KEY: Record<OpenTargetId, MessageKey> = {
 
 const FINDER_ONLY: readonly OpenTarget[] = [{ id: "finder" }];
 
+function targetKey(id: OpenTargetId): MessageKey {
+  return id === "finder" && window.omo.platform === "win32" ? "conversation.open.explorer" : TARGET_KEY[id];
+}
+
 function targetIcon(id: OpenTargetId) {
   switch (id) {
     case "vscode":
@@ -62,7 +66,7 @@ export function OpenButton({ cwd }: { cwd: string }) {
   }, []);
 
   const primary = targets.find((target) => target.id !== "terminal")?.id ?? "finder";
-  const primaryLabel = t(TARGET_KEY[primary]);
+  const primaryLabel = t(targetKey(primary));
 
   const open = (target: OpenTargetId | null): void => {
     window.omo.openWorkspace(cwd, target).catch((error: unknown) => {
@@ -78,7 +82,7 @@ export function OpenButton({ cwd }: { cwd: string }) {
     });
   };
 
-  const items: MenuEntry[] = targets.map((target) => ({ id: target.id, label: t(TARGET_KEY[target.id]), icon: targetIcon(target.id) }));
+  const items: MenuEntry[] = targets.map((target) => ({ id: target.id, label: t(targetKey(target.id)), icon: targetIcon(target.id) }));
 
   return (
     <div className={clsx(css.split, menuOpen && css.splitOpen)} data-testid={TESTID.openWorkspace} data-primary={primary}>

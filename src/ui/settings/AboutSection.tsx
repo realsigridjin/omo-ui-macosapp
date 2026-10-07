@@ -4,6 +4,7 @@ import { useT } from "../../i18n";
 import { errorMessage, useDiagnostics } from "./diagnostics";
 import { SectionHeading } from "./SectionHeading";
 import css from "./SettingsDialog.module.css";
+import { AppUpdateSection } from "./AppUpdateSection";
 
 const DSH_REPOSITORY_URL = "https://github.com/deepseek-ai/deepseek-harness";
 
@@ -24,6 +25,7 @@ export function AboutSection() {
   return (
     <section className={css.section}>
       <SectionHeading title={t("shell.settings.nav.about")} intro={t("shell.settings.about.intro")} />
+      <AppUpdateSection />
       <div className={css.card}>
         <div className={css.cardBody}>
           <dl className={css.facts}>

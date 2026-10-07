@@ -1,13 +1,13 @@
 // Native-shaped files and RPC snapshots. Stages advance by event, never by test timing luck.
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
 
 export function runDagScenario(record, turn, { home, notify, guard }) {
   const threadId = record.thread.id;
   const cwd = realpathSync(record.thread.cwd);
-  const key = `${basename(cwd)}-${createHash("sha256").update(cwd).digest("hex").slice(0, 12)}`;
-  const store = join(home, "projects", key, "senpi-task");
+  // Use the native legacy workspace store instead of duplicating platform-specific project hashing.
+  const store = join(cwd, ".omo", "senpi-task");
   const started = Date.now() - 73_000;
   const createdAt = new Date(started).toISOString();
   const childIds = new Map();

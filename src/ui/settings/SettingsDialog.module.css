@@ -1,35 +1,13 @@
-/* Panel, nav rail and header ported from DSH ui-settings-general SettingsRoot.module.css; the
-   segmented control mirrors ui-primitives SegmentedControl.module.css (MIT, Copyright (c) 2026
-   DeepSeek). */
+/* Full-window settings. The nav rail mirrors ui/sidebar (search field, fill, foot row) and the header strip mirrors
+   ConversationHeader's breadcrumb. Cards and rows are ported from DSH ui-settings-general SettingsRoot.module.css;
+   the segmented control mirrors ui-primitives SegmentedControl.module.css (MIT, Copyright (c) 2026 DeepSeek). */
 
-.overlay {
+.panel {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mask {
-  position: absolute;
-  inset: var(--dsh-frame-chrome-top, 0px) 0 0;
-  background: var(--dsw-alias-bg-mask-1);
-  backdrop-filter: var(--dsw-mask-blur);
-  animation: fadeIn var(--ds-transition-duration) var(--ds-ease-in-out);
-}
-
-.panel {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  width: 800px;
-  height: min(800px, calc(100vh - 2 * max(24px, var(--dsh-frame-overlay-top, 24px))));
-  max-width: calc(100vw - 48px);
-  border-radius: var(--dsw-radius-panel);
-  overflow: hidden;
-  background: var(--dsw-alias-bg-layer-2);
-  box-shadow: var(--dsw-elevation-prominent);
+  background: var(--dsw-alias-bg-base);
   color: var(--dsw-alias-label-primary);
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -48,38 +26,139 @@
   }
 }
 
+/* The top 52px of each column drags the window on macOS, as in AppFrame; controls inside subtract themselves. */
+.dragStrip {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 52px;
+  pointer-events: none;
+}
+
 .nav {
+  position: relative;
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: 188px;
-  padding: 22px 12px 0;
+  width: 260px;
   box-sizing: border-box;
+  padding: 0 10px 6px;
+  border-right: 0.5px solid var(--dsw-alias-border-l3);
+  background:
+    radial-gradient(140% 60% at 0% 0%, var(--dsw-omo-sidebar-glow), transparent 60%),
+    var(--dsw-specific-sidebar-fill);
+  font-size: 14px;
 }
 
-.navTitle {
-  margin: 0;
-  padding: 0 12px;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+.nav[hidden] {
+  display: none;
 }
 
-.navList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-}
-
-.navCell {
+/* The field sits centred in the 52px strip beside the breadcrumb; macOS keeps that strip for its traffic lights. */
+.search {
+  flex: none;
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 40px;
-  padding: 9px 16px 9px 12px;
+  height: 34px;
+  margin: 9px 2px 10px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-button-elevated-fill);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.search:focus-within {
+  border-color: var(--dsw-alias-border-l4);
+}
+
+:global([data-platform='darwin']) .search {
+  margin-top: 52px;
+}
+
+.searchIcon {
+  flex: none;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.searchInput::placeholder {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.searchClear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: -4px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  corner-shape: round;
+  background: transparent;
+  color: var(--dsw-alias-label-caption);
+  cursor: pointer;
+}
+
+.searchClear:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+/* The list runs to the rail's edge so its scrollbar hugs it; the gutter and padding keep cells 10px from both sides. */
+.navList {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-right: -8px;
+  padding: 2px 3px 16px 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navGroup + .navGroup {
+  margin-top: 16px;
+}
+
+.navGroupLabel {
+  padding: 0 12px 4px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.navCell {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 12px;
   box-sizing: border-box;
   border: none;
   border-radius: var(--dsw-radius-md);
@@ -101,8 +180,19 @@
   background: var(--dsw-specific-sidebar-nav-item-active);
 }
 
+.navCell:focus-visible,
+.back:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
 .navIcon {
   flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.navCell.active .navIcon {
+  color: inherit;
 }
 
 .navLabel {
@@ -113,53 +203,191 @@
   text-overflow: ellipsis;
 }
 
+.navEmpty {
+  margin: 24px 0 0;
+  padding: 0 12px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Back takes the place the sidebar gives its Settings trigger, so entering and leaving use the same spot. */
+.navFoot {
+  flex: none;
+  display: flex;
+  margin: 4px -2px 0;
+}
+
+.back {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 10px 0 8px;
+  box-sizing: border-box;
+  border: none;
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.back:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.back > svg {
+  flex: none;
+}
+
 .content {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
+/* The strip's inset adds the scrollbar gutter of .options so the breadcrumb starts on the page column's edge. */
 .header {
   flex: none;
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  height: 54px;
-  padding: 20px 14px 8px 10px;
+  align-items: center;
+  height: 52px;
   box-sizing: border-box;
+  padding: 0 calc(24px + var(--dsh-scrollbar-width));
 }
 
-.close {
+.headerInner {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.navToggle {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
+  margin-left: -4px;
   padding: 0;
   border: none;
   border-radius: var(--dsw-radius-sm);
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-tertiary);
   cursor: pointer;
 }
 
-.close:hover {
+.navToggle:hover {
   background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.breadcrumb {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.crumbRoot {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.crumbSeparator {
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+}
+
+.crumbCurrent {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .options {
   flex: 1;
   min-height: 0;
-  padding: 0 24px 24px;
+  padding: 4px 24px 40px;
   overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Narrow windows: the rail leaves the row and opens over the page from the header toggle. */
+.panel[data-narrow] .nav {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: min(260px, calc(100% - 48px));
+  box-shadow: var(--dsw-elevation-prominent);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--dsw-alias-bg-mask-1);
+  animation: fadeIn var(--ds-transition-duration) var(--ds-ease-in-out);
+}
+
+.proxyField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.proxyInput {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-sm);
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+
+@media (max-width: 640px) {
+  [data-testid="proxy-settings"] > .row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 .section {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
   max-width: 720px;
+  margin: 0 auto;
 }
 
 .sectionHeading {
@@ -169,12 +397,9 @@
   margin-bottom: 8px;
 }
 
+/* The header's breadcrumb names the page, so the heading keeps only its intro. */
 .sectionTitle {
-  margin: 0;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+  display: none;
 }
 
 .sectionIntro {
@@ -407,9 +632,73 @@
   text-decoration: underline;
 }
 
+/* Rows with a wide control: the control drops under the text instead of squeezing it. */
+.wrapRows .row {
+  flex-wrap: wrap;
+}
+
+.wrapRows .rowText {
+  flex-basis: 220px;
+}
+
+.wrapRows .rowControl {
+  max-width: 100%;
+}
+
+.rowNote,
+.rowWarning {
+  display: block;
+}
+
+.rowNote {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.rowWarning {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.select {
+  box-sizing: border-box;
+  width: 240px;
+  max-width: 100%;
+  height: 34px;
+  padding: 0 12px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.select:focus-visible {
+  outline: none;
+  border-color: var(--dsw-alias-state-business-primary);
+}
+
+.select:disabled {
+  color: var(--dsw-alias-label-tertiary);
+  cursor: default;
+}
+
+.keycaps kbd {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-xs);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--ds-font-family-code);
+  font-size: 11px;
+  line-height: 18px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mask,
-  .panel {
+  .panel,
+  .scrim {
     animation: none;
   }
 

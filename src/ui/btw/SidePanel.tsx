@@ -424,7 +424,7 @@ export function SidePanel({ placement }: { placement: "docked" | "overlay" }) {
         )}
         <span className={css.headerSpacer} />
         <kbd className={css.kbd} aria-hidden>
-          ⌘E
+          {window.omo.platform === "darwin" ? "⌘E" : "Ctrl+E"}
         </kbd>
         <Tooltip label={t("btw.close")} side="bottom" delayMs={500}>
           <button type="button" className={css.iconButton} data-testid={TESTID.sideClose} aria-label={t("btw.close")} onClick={close}>

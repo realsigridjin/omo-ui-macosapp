@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Model } from "../../../shared/protocol";
-import type { ModelProfile } from "../../../shared/ipc";
+import type { ModelProfile, Preferences } from "../../../shared/ipc";
 import { useT } from "../../i18n";
 import { TESTID } from "../testids";
 import { laneAt, PROFILE_LANES, resolveProfile } from "./model-profiles";
@@ -121,10 +121,14 @@ function Led({
 export function ProfilePicker({
   models,
   current,
+  profileModels,
+  onConfigure,
   onSelect,
 }: {
   models: Model[];
   current: ModelProfile | null;
+  profileModels?: Preferences["profileModels"];
+  onConfigure: (profile: ModelProfile) => void;
   onSelect: (profile: ModelProfile) => void;
 }) {
   const t = useT();
@@ -138,7 +142,9 @@ export function ProfilePicker({
   });
   const dragging = useRef(false);
   const dot = useRef<HTMLButtonElement>(null);
-  const resolved = resolveProfile(models, preview);
+  const resolved = resolveProfile(models, preview, profileModels);
+  const configuredModelId = profileModels?.[preview];
+  const configuredModelUnavailable = configuredModelId !== undefined && !models.some((model) => !model.hidden && model.id === configuredModelId);
   const name =
     resolved.model?.displayName.replace(/^Claude\s+/i, "") ??
     t("composer.model.none");
@@ -216,7 +222,7 @@ export function ProfilePicker({
                 data-active={entry.id === preview}
                 data-geeky={entry.family === "geeky"}
               >
-                {entry.name}
+                {resolveProfile(models, entry.id, profileModels).model?.displayName.replace(/^Claude\s+/i, "") ?? entry.name}
               </div>
             ))}
             <button
@@ -282,8 +288,14 @@ export function ProfilePicker({
             </span>
           </div>
           <p>{t(`composer.profile.description.${preview}`)}</p>
+          <button type="button" className={css.configure} data-profile-configure={preview} onClick={() => onConfigure(preview)}>
+            {t("composer.profile.model")}
+          </button>
           <div className={css.resolved}>
-            <span>{t("composer.profile.resolved")}</span>
+            {configuredModelUnavailable && <span role="status" data-profile-unavailable={preview}>
+              {t("composer.profile.model")}: {configuredModelId} · {t("composer.model.searchEmpty")}
+            </span>}
+            <span>{configuredModelUnavailable ? `${t("composer.profile.automatic")} · ` : ""}{t("composer.profile.resolved")}</span>
             <strong>
               {name} · {resolved.effort ?? "—"}
             </strong>

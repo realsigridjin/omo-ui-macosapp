@@ -1,5 +1,5 @@
 import type { Model, ReasoningEffort } from "../../../shared/protocol";
-import type { ModelProfile } from "../../../shared/ipc";
+import type { ModelProfile, Preferences } from "../../../shared/ipc";
 
 export const PROFILE_LANES = [
   {
@@ -52,10 +52,11 @@ export function laneAt(x: number, y: number): ModelProfile {
   return `${x < 0.5 ? "daily" : "geeky"}-${y < 0.5 ? "heavy" : "normal"}`;
 }
 
-/** Exact name/id, nearest named family, provider family, default, then first visible model. */
+/** Configured visible model, otherwise Automatic: exact name/id, nearest named family, provider family, default, then first visible model. */
 export function resolveProfile(
   models: readonly Model[],
   profile: ModelProfile,
+  profileModels?: Preferences["profileModels"],
 ): { model: Model | null; effort: ReasoningEffort | null } {
   const lane = PROFILE_LANES.find((entry) => entry.id === profile)!;
   const visible = models.filter((model) => !model.hidden);
@@ -65,6 +66,7 @@ export function resolveProfile(
     .split(" ")
     .find((part) => ["Fable", "Opus", "Astra", "Sol"].includes(part))!;
   const model =
+    visible.find((entry) => entry.id === profileModels?.[profile]) ??
     visible.find((entry) => lane.pattern.test(text(entry))) ??
     visible.find((entry) =>
       text(entry).toLowerCase().includes(family.toLowerCase()),

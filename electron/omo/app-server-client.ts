@@ -153,12 +153,15 @@ export class AppServerClient {
 
   private spawnChild(): ManagedChild {
     const spawnImpl = this.options.spawnImpl ?? spawn;
-    const process = spawnImpl(this.options.command, this.options.args, {
+    const nodeScript = process.platform === "win32" && /\.mjs$/i.test(this.options.command);
+    const childProcess = spawnImpl(nodeScript ? process.execPath : this.options.command,
+      nodeScript ? [this.options.command, ...this.options.args] : this.options.args, {
       cwd: this.options.cwd,
-      env: this.options.env,
+      env: nodeScript ? { ...this.options.env, ELECTRON_RUN_AS_NODE: "1" } : this.options.env,
       stdio: "pipe",
+      windowsHide: true,
     });
-    const child = new ManagedChild(process, (code, signal) => {
+    const child = new ManagedChild(childProcess, (code, signal) => {
       this.rejectPending(new RpcRequestError(BRIDGE_ERROR_CODES.notConnected, `omo app-server exited with ${describeExit(code, signal)}`));
     });
     this.child = child;
@@ -166,8 +169,8 @@ export class AppServerClient {
       onFrame: (value) => this.handleFrame(value),
       onMalformed: (line, error) => this.emitMalformed(line, error),
     });
-    process.stdout.on("data", (chunk: Buffer) => decoder.push(chunk));
-    process.stdout.on("end", () => decoder.end());
+    childProcess.stdout.on("data", (chunk: Buffer) => decoder.push(chunk));
+    childProcess.stdout.on("end", () => decoder.end());
     void child.exited.then((info) => {
       for (const listener of [...this.exitListeners]) listener(info);
     });

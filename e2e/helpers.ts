@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -81,6 +81,8 @@ export async function launchApp(options: LaunchOptions): Promise<LaunchedApp> {
   delete env["FAKE_OMO_LOG"];
 
   const userData = options.userData ?? own("user-data");
+  const preferences = path.join(userData, "preferences.json");
+  if (!existsSync(preferences)) writeFileSync(preferences, JSON.stringify({ locale: "en" }));
   env[ENV.userData] = userData;
   const pickDir = options.pickDir ?? null;
   if (pickDir !== null) env[ENV.qaPickDir] = pickDir;
@@ -123,7 +125,7 @@ export async function launchApp(options: LaunchOptions): Promise<LaunchedApp> {
     await app.evaluate(({ BrowserWindow }, wanted) => {
       BrowserWindow.getAllWindows()[0]?.setContentSize(wanted.width, wanted.height);
     }, size);
-    await expect(byTestId(page, TESTID.appFrame)).toBeVisible({ timeout: LAUNCH_TIMEOUT_MS });
+    await expect(byTestId(page, TESTID.appFrame).or(byTestId(page, TESTID.onboarding)).first()).toBeVisible({ timeout: LAUNCH_TIMEOUT_MS });
     if (options.waitForConnected !== false) {
       await expect(page.locator("html")).toHaveAttribute("data-bridge-state", "connected", { timeout: LAUNCH_TIMEOUT_MS });
     }
@@ -195,6 +197,12 @@ export async function newSession(page: Page): Promise<string> {
     rows.map((row) => row.getAttribute("data-thread-id")),
   );
   await byTestId(page, TESTID.newSession).click();
+  await page.waitForFunction(({ rowTestId, known }) => {
+    const row = document.querySelector(`[data-testid="${rowTestId}"][aria-current="page"]`);
+    const id = row?.getAttribute("data-thread-id");
+    return document.querySelector('[data-testid="project-picker"]') !== null || (id !== undefined && id !== null && !known.includes(id));
+  }, { rowTestId: TESTID.threadRow, known: before });
+  if (await page.getByTestId("project-picker").count() > 0) await page.getByTestId("project-new").click();
   const opened = await page.waitForFunction(
     ({ rowTestId, known }) => {
       const row = document.querySelector(`[data-testid="${rowTestId}"][aria-current="page"]`);

@@ -1,9 +1,10 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { LocalePreference, Preferences, ThemePreference } from "../shared/ipc";
+import type { LocalePreference, ModelProfile, Preferences, ThemePreference } from "../shared/ipc";
 
 const THEMES: readonly ThemePreference[] = ["system", "light", "dark"];
 const LOCALES: readonly LocalePreference[] = ["system", "en", "ko"];
+const PROFILES: readonly ModelProfile[] = ["daily-normal", "daily-heavy", "geeky-normal", "geeky-heavy"];
 const MAX_RECENT = 10;
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -37,6 +38,18 @@ function recent(value: unknown, current: string[]): string[] {
   return unique.slice(0, MAX_RECENT);
 }
 
+function profileModels(value: unknown, current: Preferences["profileModels"]): Preferences["profileModels"] {
+  if (!isRecord(value)) return current;
+  const next: Partial<Record<ModelProfile, string>> = {};
+  for (const profile of PROFILES) {
+    if (!(profile in value)) continue;
+    const modelId = value[profile];
+    if (typeof modelId === "string" && modelId.trim() !== "") next[profile] = modelId;
+    else if (current?.[profile] !== undefined) next[profile] = current[profile];
+  }
+  return next;
+}
+
 /** Applies every valid field of patch to current; invalid or unknown values keep the current value. */
 function merge(current: Preferences, patch: unknown): Preferences {
   if (!isRecord(patch)) return current;
@@ -49,8 +62,10 @@ function merge(current: Preferences, patch: unknown): Preferences {
     recentWorkspaces: has("recentWorkspaces") ? recent(patch["recentWorkspaces"], current.recentWorkspaces) : current.recentWorkspaces,
     modelId: has("modelId") ? nullableString(patch["modelId"], current.modelId) : current.modelId,
     ...(has("modelProfile") ? { modelProfile: patch["modelProfile"] === null ? null :
-      (["daily-normal", "daily-heavy", "geeky-normal", "geeky-heavy"] as const).find(value => value === patch["modelProfile"]) ?? current.modelProfile ?? null }
+      PROFILES.find(value => value === patch["modelProfile"]) ?? current.modelProfile ?? null }
       : current.modelProfile === undefined ? {} : { modelProfile: current.modelProfile }),
+    ...(has("profileModels") ? { profileModels: profileModels(patch["profileModels"], current.profileModels) }
+      : current.profileModels === undefined ? {} : { profileModels: current.profileModels }),
   };
 }
 

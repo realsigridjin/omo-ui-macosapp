@@ -6,6 +6,7 @@ export const SIDEBAR_MAX_WIDTH = 420;
 export const SIDEBAR_DEFAULT_WIDTH = 280;
 
 export interface UiState {
+  workspacePanelOpen: boolean;
   settingsOpen: boolean;
   sidebarVisible: boolean;
   sidebarWidth: number;
@@ -14,6 +15,7 @@ export interface UiState {
 }
 
 let state: UiState = {
+  workspacePanelOpen: false,
   settingsOpen: false,
   sidebarVisible: true,
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
@@ -38,6 +40,7 @@ export function clampSidebarWidth(width: number): number {
 }
 
 export const uiState = {
+  setWorkspacePanelOpen: (workspacePanelOpen: boolean): void => update({ workspacePanelOpen }),
   get: (): UiState => state,
   subscribe,
   setSettingsOpen: (settingsOpen: boolean): void => update({ settingsOpen }),

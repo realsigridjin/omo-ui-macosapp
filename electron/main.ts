@@ -5,6 +5,7 @@ import { app, BrowserWindow, shell } from "electron";
 import { ENV, IPC } from "../shared/ipc";
 import type { MenuCommand } from "../shared/ipc";
 import { IphoneBridge, loadIphoneToken } from "./iphone/bridge";
+import { AndroidBridge } from "./android/bridge";
 import { registerIpc } from "./ipc";
 import { installApplicationMenu } from "./menu";
 import { OmoSupervisor } from "./omo/supervisor";
@@ -12,7 +13,7 @@ import { PreferencesStore } from "./prefs";
 
 const QUIT_STOP_TIMEOUT_MS = 5_000;
 
-app.setName("OmO UI");
+app.setName("OmO UI Windows");
 const userDataOverride = process.env[ENV.userData];
 if (userDataOverride) app.setPath("userData", userDataOverride);
 
@@ -42,13 +43,18 @@ function createWindow(): BrowserWindow {
     height: 820,
     minWidth: 520,
     minHeight: 600,
-    title: "OmO UI",
+    title: "OmO UI Windows",
     show: false,
-    titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 16, y: 18 },
-    vibrancy: "sidebar",
-    visualEffectState: "active",
-    backgroundColor: "#00000000",
+    ...(process.platform === "darwin" ? {
+      titleBarStyle: "hiddenInset" as const,
+      trafficLightPosition: { x: 16, y: 18 },
+      vibrancy: "sidebar" as const,
+      visualEffectState: "active" as const,
+      backgroundColor: "#00000000",
+    } : {
+      backgroundColor: "#171717",
+      icon: app.isPackaged ? path.join(process.resourcesPath, "icon.png") : path.join(__dirname, "../build/icon.png"),
+    }),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -101,6 +107,7 @@ function run(): void {
   });
 
   const iphone = new IphoneBridge(supervisor, undefined, undefined, loadIphoneToken(app.getPath("userData")));
+  const android = new AndroidBridge(supervisor);
 
   app.on("second-instance", () => {
     if (app.isReady()) focusWindow();
@@ -109,7 +116,7 @@ function run(): void {
   void app.whenReady().then(() => {
     if (!app.isPackaged) app.dock?.setIcon(path.join(__dirname, "../build/icon.png"));
     installApplicationMenu(sendMenuCommand);
-    registerIpc({ supervisor, iphone, prefs, getWindow: () => mainWindow, homeDir });
+    registerIpc({ supervisor, iphone, android, prefs, getWindow: () => mainWindow, homeDir });
     createWindow();
     iphone.start();
     void supervisor.start();
@@ -137,7 +144,7 @@ function run(): void {
         resolve();
       }, QUIT_STOP_TIMEOUT_MS);
     });
-    const stopped = supervisor.stop().catch((error: unknown) => {
+    const stopped = Promise.all([android.stop(), supervisor.stop()]).catch((error: unknown) => {
       console.error("failed to stop omo", error);
     });
     void Promise.race([stopped, bounded]).finally(() => {

@@ -59,7 +59,7 @@ test("a new session opens promptly while an answer streams fast into a long conv
   // The transcript must be large enough that a synchronous layout per streamed delta costs more than the 2 ms between
   // deltas; that per-delta layout is what delayed every other renderer task.
   expect(await page.evaluate(() => document.getElementsByTagName("*").length)).toBeGreaterThan(30_000);
-  const compose = page.locator(`[data-testid="${TESTID.workspaceGroup}"][data-cwd="${pickDir}"] [data-testid="${TESTID.workspaceCompose}"]`);
+  const compose = page.locator(`[data-testid="${TESTID.workspaceGroup}"][data-cwd=${JSON.stringify(pickDir)}] [data-testid="${TESTID.workspaceCompose}"]`);
   const box = await compose.boundingBox();
   if (box === null) throw new Error("the compose icon is not laid out");
 

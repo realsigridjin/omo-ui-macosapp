@@ -23,6 +23,15 @@ export function loginScript(omoPath: string, provider: string): string {
 export type RunFile = (file: string, args: string[]) => Promise<unknown>;
 
 /** Opens omo in Terminal for an interactive sign-in; omo stores the account itself. */
-export async function openLogin(omoPath: string, provider: string, run: RunFile = execFileAsync): Promise<void> {
-  await run("/usr/bin/osascript", ["-e", loginScript(omoPath, provider)]);
+export async function openLogin(omoPath: string, provider: string, run: RunFile = execFileAsync, platform: NodeJS.Platform = process.platform): Promise<void> {
+  if (platform === "win32") {
+    const quote = (value: string): string => `'${value.replaceAll("'", "''")}'`;
+    const command = `Set-Location -LiteralPath $HOME; & ${quote(omoPath)} ${quote(loginCommand(provider))}`;
+    const encoded = Buffer.from(command, "utf16le").toString("base64");
+    // Start-Process creates an interactive console; only fixed flags and base64 cross its argument-string boundary.
+    const launcher = `Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -ArgumentList '-NoLogo -NoProfile -NoExit -EncodedCommand ${encoded}'`;
+    await run("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(launcher, "utf16le").toString("base64")]);
+  } else {
+    await run("/usr/bin/osascript", ["-e", loginScript(omoPath, provider)]);
+  }
 }

@@ -6,7 +6,7 @@ import type { ExitInfo, InitializeResult } from "../../electron/omo/app-server-c
 import { OmoSupervisor } from "../../electron/omo/supervisor";
 import type { SupervisedClient } from "../../electron/omo/supervisor";
 
-const CRASH = path.join(__dirname, "..", "fixtures", "omo-crash.sh");
+const CRASH = path.join(__dirname, "..", "fixtures", process.platform === "win32" ? "omo-crash.mjs" : "omo-crash.sh");
 const loginEnv = async () => ({ env: { PATH: "/usr/bin:/bin" }, fromLoginShell: false });
 
 function waitForStatus(supervisor: OmoSupervisor, predicate: (status: BridgeStatus) => boolean, timeoutMs = 10_000): Promise<BridgeStatus> {

@@ -1,4 +1,4 @@
-import { ENV, OMO_INSTALL_COMMAND } from "../../shared/ipc";
+import { ENV, getOmoInstallCommand } from "../../shared/ipc";
 import type { BridgeStatus, Diagnostics, OmoBinary } from "../../shared/ipc";
 import type { ClientMethod, ClientParams, ClientResult, RequestId, RpcNotification, RpcServerRequest } from "../../shared/protocol";
 import { AppServerClient, AppServerStartError, BRIDGE_ERROR_CODES, RpcRequestError } from "./app-server-client";
@@ -48,7 +48,7 @@ export class OmoSupervisor {
     stderrTail: null,
     exitCode: null,
     restartAttempt: 0,
-    installCommand: OMO_INSTALL_COMMAND,
+    installCommand: getOmoInstallCommand(process.platform),
   };
   private client: SupervisedClient | null = null;
   private loginEnv: LoginShellEnv | null = null;

@@ -13,7 +13,8 @@ export function useSidePanelShortcut(): void {
   const store = useAppStore();
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent): void => {
-      if (!event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.isComposing) return;
+      const modifier = window.omo.platform === "darwin" ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
+      if (!modifier || event.altKey || event.shiftKey || event.isComposing) return;
       if (event.key.toLowerCase() !== "e") return;
       event.preventDefault();
       actions.setSidePanel(!store.getState().btw.open);

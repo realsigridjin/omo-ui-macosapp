@@ -39,7 +39,7 @@ export const ConversationHeader = memo(function ConversationHeader({
   activity?: ReactNode;
 }) {
   const t = useT();
-  const { sidebarVisible } = useUiState();
+  const { sidebarVisible, workspacePanelOpen } = useUiState();
   const toggle = sidebarVisible ? null : <SidebarToggle />;
   if (!active) {
     return (
@@ -78,6 +78,7 @@ export const ConversationHeader = memo(function ConversationHeader({
           </span>
         )}
         {cwd !== "" && <OpenButton cwd={cwd} />}
+        {cwd !== "" && <button type="button" className={css.sidebarToggle} data-testid="workspace-toggle" aria-pressed={workspacePanelOpen} aria-label={t("shell.workspace.files")} onClick={() => uiState.setWorkspacePanelOpen(!workspacePanelOpen)}>{t("shell.workspace.files")}</button>}
       </div>
     </header>
   );

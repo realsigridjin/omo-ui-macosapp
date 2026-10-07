@@ -43,7 +43,17 @@ function stringEnv(env: Record<string, string | undefined>): Record<string, stri
 
 function fallbackEnv(options: ResolveLoginShellEnvOptions): LoginShellEnv {
   const env = stringEnv(options.baseEnv);
-  const prefix = ["/opt/homebrew/bin", "/usr/local/bin", path.join(options.homeDir, ".local", "bin")].join(":");
+  if (process.platform === "win32") {
+    const pathKey = Object.keys(env).find((key) => key.toUpperCase() === "PATH");
+    const basePath = pathKey === undefined ? undefined : env[pathKey];
+    for (const key of Object.keys(env)) {
+      if (key.toUpperCase() === "PATH") delete env[key];
+    }
+    const prefix = path.win32.join(options.homeDir, ".local", "bin");
+    env["PATH"] = basePath ? `${prefix};${basePath}` : prefix;
+    return { env, fromLoginShell: false };
+  }
+  const prefix = ["/opt/homebrew/bin", "/usr/local/bin", path.posix.join(options.homeDir, ".local", "bin")].join(":");
   env["PATH"] = env["PATH"] ? `${prefix}:${env["PATH"]}` : prefix;
   return { env, fromLoginShell: false };
 }
@@ -75,6 +85,7 @@ function runLoginShell(shell: string, options: ResolveLoginShellEnvOptions): Pro
 
 /** Captures the user's login-shell environment; falls back to baseEnv with common bin dirs prepended to PATH. */
 export async function resolveLoginShellEnv(options: ResolveLoginShellEnvOptions): Promise<LoginShellEnv> {
+  if (process.platform === "win32") return fallbackEnv(options);
   const shell = options.shell ?? options.baseEnv["SHELL"] ?? "/bin/zsh";
   const output = await runLoginShell(shell, options);
   const env = output === null ? null : parseEnvBlock(output);

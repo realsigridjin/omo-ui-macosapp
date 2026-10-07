@@ -63,6 +63,27 @@ function bridgeStatus(state: BridgeStatus["state"]): BridgeStatus {
 }
 
 class FakeBridge implements OmoBridgeApi {
+  readModelRouting(): ReturnType<OmoBridgeApi["readModelRouting"]> { return Promise.resolve({ configPath: "", categories: [], agents: [], mappings: [] }); }
+  saveModelRouting(input: Parameters<OmoBridgeApi["saveModelRouting"]>[0]): ReturnType<OmoBridgeApi["saveModelRouting"]> { return Promise.resolve({ configPath: "", ...input }); }
+  importExistingMcpConfigs(): ReturnType<OmoBridgeApi["importExistingMcpConfigs"]> { return Promise.resolve({ imported: [], sources: 0 }); }
+  readConfiguredMcpServers(): ReturnType<OmoBridgeApi["readConfiguredMcpServers"]> { return Promise.resolve([]); }
+  getAppUpdateStatus(): ReturnType<OmoBridgeApi["getAppUpdateStatus"]> { return Promise.resolve({ state: "idle", currentVersion: "0.1.4-win.1", latestVersion: null, progress: null, message: null }); }
+  checkAppUpdate(): ReturnType<OmoBridgeApi["checkAppUpdate"]> { return this.getAppUpdateStatus(); }
+  installAppUpdate(): ReturnType<OmoBridgeApi["installAppUpdate"]> { return this.getAppUpdateStatus(); }
+  onAppUpdateStatus(): () => void { return () => {}; }
+  getDeviceOverview(): ReturnType<OmoBridgeApi["getDeviceOverview"]> { return Promise.resolve({ hostname: "test", platform: "win32", appVersion: "0.1.3", omoVersion: null, memory: { path: null, branch: null, lastCommitAt: null, changedFiles: 0, remoteConfigured: false, state: "unavailable" } }); }
+  listWorkspaceFiles(): ReturnType<OmoBridgeApi["listWorkspaceFiles"]> { return Promise.resolve([]); }
+  readWorkspaceFile(): ReturnType<OmoBridgeApi["readWorkspaceFile"]> { return Promise.resolve({ path: "", text: "", language: "text" }); }
+  getWorkspaceDiff(): ReturnType<OmoBridgeApi["getWorkspaceDiff"]> { return Promise.resolve(""); }
+  importMcpConfig(): ReturnType<OmoBridgeApi["importMcpConfig"]> { return Promise.resolve(null); }
+  readOpencodexAccounts(): ReturnType<OmoBridgeApi["readOpencodexAccounts"]> { return Promise.resolve({ baseUrl: "", accounts: [], error: null }); }
+  getAndroidStatus(): ReturnType<OmoBridgeApi["getAndroidStatus"]> { return Promise.resolve({ adbAvailable: false, state: "disabled", devices: [], selectedSerial: null, url: null, message: null }); }
+  refreshAndroid(): ReturnType<OmoBridgeApi["refreshAndroid"]> { return this.getAndroidStatus(); }
+  connectAndroid(): ReturnType<OmoBridgeApi["connectAndroid"]> { return this.getAndroidStatus(); }
+  disconnectAndroid(): ReturnType<OmoBridgeApi["disconnectAndroid"]> { return this.getAndroidStatus(); }
+  onAndroidStatus(): () => void { return () => {}; }
+  getProxySettings(): ReturnType<OmoBridgeApi["getProxySettings"]> { return Promise.resolve({ baseUrl: "", apiKeyConfigured: false, modelCount: 0 }); }
+  applyProxySettings(): ReturnType<OmoBridgeApi["applyProxySettings"]> { return Promise.resolve({ baseUrl: "", apiKeyConfigured: false, modelCount: 0 }); }
   loadTaskWork(): ReturnType<OmoBridgeApi["loadTaskWork"]> { return Promise.resolve([]); }
   getIphoneStatus(): ReturnType<OmoBridgeApi["getIphoneStatus"]> { return Promise.resolve({ enabled: false, state: "searching", devices: [] }); }
   onIphoneStatus(): () => void { return () => {}; }

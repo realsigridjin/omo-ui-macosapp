@@ -6,6 +6,20 @@ import { TESTID } from "../src/ui/testids.ts";
 import { byTestId, launchApp, setTheme, shot, tempDir } from "./helpers.ts";
 
 test("USB phone controls omo and Settings tracks detach", async () => {
+  if (process.platform === "win32") {
+    const app = await launchApp({ omo: "fake" });
+    try {
+      await byTestId(app.page, TESTID.openSettings).click();
+      await app.page.locator('[data-section="android"]').click();
+      await expect(app.page.getByTestId("android-refresh")).toBeVisible();
+      await expect(app.page.locator('[data-section="iphone"]')).toHaveCount(0);
+      expect(await app.page.evaluate(() => window.omo.getIphoneStatus())).toMatchObject({ enabled: false, devices: [] });
+      await shot(app.page, "iphone-windows-unsupported");
+    } finally {
+      await app.close();
+    }
+    return;
+  }
   const dir = tempDir("iphone");
   const fake = await createFakeUsbmuxd(path.join(dir, "mux.sock"));
   try {

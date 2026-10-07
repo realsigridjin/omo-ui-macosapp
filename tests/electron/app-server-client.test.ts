@@ -5,7 +5,7 @@ import type { AppServerClientOptions, ExitInfo } from "../../electron/omo/app-se
 import type { RpcNotification, RpcServerRequest } from "../../shared/protocol";
 
 const STUB = path.join(__dirname, "fixtures", "fake-app-server.mjs");
-const CRASH = path.join(__dirname, "..", "fixtures", "omo-crash.sh");
+const CRASH = path.join(__dirname, "..", "fixtures", "omo-crash.mjs");
 const clients: AppServerClient[] = [];
 
 function stubClient(env: Record<string, string> = {}, overrides: Partial<AppServerClientOptions> = {}): AppServerClient {
@@ -127,8 +127,8 @@ describe("AppServerClient", () => {
 
   it("rejects start() when the child exits before initializing", async () => {
     const client = new AppServerClient({
-      command: CRASH,
-      args: ["app-server", "--listen", "stdio://"],
+      command: process.execPath,
+      args: [CRASH, "app-server", "--listen", "stdio://"],
       cwd: __dirname,
       env: { PATH: "/usr/bin:/bin" },
       clientVersion: "0.0.0-test",
@@ -169,7 +169,7 @@ describe("AppServerClient", () => {
     await client.start();
     const exit = nextEvent<ExitInfo>((listener) => client.onExit(listener));
     await client.stop();
-    await expect(exit).resolves.toMatchObject({ signal: "SIGKILL", expected: true });
+    await expect(exit).resolves.toMatchObject({ signal: process.platform === "win32" ? "SIGTERM" : "SIGKILL", expected: true });
   });
 
   it("stop() closes stdin and lets a cooperative child exit cleanly", async () => {

@@ -4,7 +4,7 @@ import type { MenuCommand } from "../shared/ipc";
 
 const GITHUB_URL = "https://github.com/code-yeongyu/oh-my-openagent";
 
-/** Installs the macOS application menu; custom items call sendCommand. */
+/** Installs platform application menus; custom items call sendCommand. */
 export function installApplicationMenu(sendCommand: (command: MenuCommand) => void): void {
   const developerItems: MenuItemConstructorOptions[] = app.isPackaged
     ? []
@@ -17,12 +17,14 @@ export function installApplicationMenu(sendCommand: (command: MenuCommand) => vo
         { type: "separator" },
         { label: "Settings…", accelerator: "CmdOrCtrl+,", click: () => sendCommand("settings") },
         { type: "separator" },
-        { role: "services" },
-        { type: "separator" },
-        { role: "hide" },
-        { role: "hideOthers" },
-        { role: "unhide" },
-        { type: "separator" },
+        ...(process.platform === "darwin" ? [
+          { role: "services" as const },
+          { type: "separator" as const },
+          { role: "hide" as const },
+          { role: "hideOthers" as const },
+          { role: "unhide" as const },
+          { type: "separator" as const },
+        ] : []),
         { role: "quit" },
       ],
     },
@@ -63,7 +65,9 @@ export function installApplicationMenu(sendCommand: (command: MenuCommand) => vo
     },
     {
       role: "window",
-      submenu: [{ role: "minimize" }, { role: "zoom" }, { type: "separator" }, { role: "front" }],
+      submenu: process.platform === "darwin"
+        ? [{ role: "minimize" }, { role: "zoom" }, { type: "separator" }, { role: "front" }]
+        : [{ role: "minimize" }, { role: "close" }],
     },
     {
       role: "help",

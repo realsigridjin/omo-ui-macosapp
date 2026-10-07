@@ -9,6 +9,7 @@ import { TESTID } from "../testids";
 import { SectionHeading } from "./SectionHeading";
 import css from "./SettingsDialog.module.css";
 import accountCss from "./AccountsSection.module.css";
+import { OpencodexAccounts } from "./OpencodexAccounts";
 
 const PROVIDER_LABELS: Record<string, string> = {
   "anthropic-subscription": "Claude",
@@ -153,6 +154,7 @@ export function AccountsSection() {
           {loading ? t("shell.settings.accounts.loading") : t("shell.settings.accounts.refresh")}
         </Button>
       </div>
+      <OpencodexAccounts refresh={loading} />
       {snapshot?.usageError !== null && snapshot?.usageError !== undefined && (
         <p className={css.error} role="alert">{t("shell.settings.accounts.usageError", { message: snapshot.usageError })}</p>
       )}
